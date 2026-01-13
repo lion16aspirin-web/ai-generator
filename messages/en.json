@@ -1,0 +1,218 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "chat": "AI Chat",
+    "images": "Image Generation",
+    "video": "Video Generation",
+    "animate": "Photo Animation",
+    "pricing": "Pricing",
+    "docs": "Documentation",
+    "settings": "Settings",
+    "logout": "Logout"
+  },
+  "Header": {
+    "search": "Search...",
+    "tokens": "tokens",
+    "login": "Sign In"
+  },
+  "Home": {
+    "title": "Create incredible with AI",
+    "subtitle": "Generate text, images, videos and animations using the best AI models",
+    "getStarted": "Get Started Free",
+    "features": {
+      "chat": {
+        "title": "AI Chat",
+        "description": "GPT-5, Claude 3 Opus, Gemini 1.5 Pro and other top models"
+      },
+      "images": {
+        "title": "Image Generation",
+        "description": "DALL-E 3, Midjourney, Stable Diffusion, Flux and Kandinsky"
+      },
+      "video": {
+        "title": "Video Generation",
+        "description": "Google Veo, Sora 2, Kling, PixVerse, Minimax, Wan"
+      },
+      "animate": {
+        "title": "Photo Animation",
+        "description": "Runway, Luma Dream Machine, Kling for animation"
+      }
+    }
+  },
+  "Chat": {
+    "title": "AI Chat",
+    "selectModel": "Select model",
+    "placeholder": "Type your message...",
+    "send": "Send",
+    "models": {
+      "gpt5nano": "GPT-5 nano",
+      "gpt41": "GPT-4.1",
+      "gpt5": "GPT-5",
+      "claude3opus": "Claude 3 Opus",
+      "claude3sonnet": "Claude 3 Sonnet",
+      "gemini15pro": "Gemini 1.5 Pro",
+      "llama3": "Llama 3"
+    }
+  },
+  "Images": {
+    "title": "Image Generation",
+    "prompt": "Describe the image",
+    "placeholder": "Describe what you want to create...",
+    "generate": "Generate",
+    "selectModel": "Select model",
+    "size": "Size",
+    "style": "Style",
+    "models": {
+      "dalle3": "DALL-E 3",
+      "midjourney6": "Midjourney 6",
+      "sdxl": "Stable Diffusion XL",
+      "kandinsky3": "Kandinsky 3.0",
+      "flux": "Flux"
+    }
+  },
+  "Video": {
+    "title": "Video Generation",
+    "prompt": "Describe the video",
+    "placeholder": "Describe what should be in the video...",
+    "generate": "Generate",
+    "selectModel": "Select model",
+    "duration": "Duration",
+    "resolution": "Resolution",
+    "models": {
+      "veo": "Google Veo",
+      "sora2": "Sora 2",
+      "kling": "Kling",
+      "pixverse": "PixVerse",
+      "minimax": "Minimax",
+      "wan": "Wan",
+      "runway": "Runway",
+      "luma": "Luma Dream Machine"
+    }
+  },
+  "Animate": {
+    "title": "Photo Animation",
+    "subtitle": "Transform static images into living videos",
+    "upload": "Upload photo",
+    "uploadHint": "Drag & drop or click to select",
+    "prompt": "Motion description (optional)",
+    "promptPlaceholder": "Describe how the image should move...",
+    "animate": "Animate",
+    "selectModel": "Select model",
+    "models": {
+      "runway": "Runway Gen-3",
+      "luma": "Luma Dream Machine",
+      "kling": "Kling"
+    }
+  },
+  "Pricing": {
+    "title": "Pricing Plans",
+    "subtitle": "Choose the plan that suits you best",
+    "monthly": "Monthly",
+    "perMonth": "/month",
+    "tokens": "tokens",
+    "popular": "Popular",
+    "subscribe": "Subscribe",
+    "plans": {
+      "free": {
+        "name": "Free",
+        "price": "0",
+        "tokens": "100",
+        "features": ["100 tokens daily", "Basic models", "Limited speed"]
+      },
+      "starter": {
+        "name": "Starter",
+        "price": "9",
+        "tokens": "5000",
+        "features": ["5,000 tokens/mo", "All AI models", "Priority queue", "Email support"]
+      },
+      "pro": {
+        "name": "Professional",
+        "price": "29",
+        "tokens": "25000",
+        "features": ["25,000 tokens/mo", "All AI models", "Highest priority", "API access", "Premium support"]
+      },
+      "unlimited": {
+        "name": "Unlimited",
+        "price": "99",
+        "tokens": "Unlimited",
+        "features": ["Unlimited tokens", "All AI models", "Dedicated server", "API access", "Personal manager"]
+      }
+    }
+  },
+  "Docs": {
+    "title": "Documentation",
+    "subtitle": "Learn how to use AI Generator to its fullest",
+    "sections": {
+      "getting-started": {
+        "title": "Getting Started",
+        "content": "Sign up and get free tokens to start. Choose a model and start generating!"
+      },
+      "chat": {
+        "title": "AI Chat",
+        "content": "Use GPT-5, Claude 3, Gemini and other models for text generation, code, analysis and creative tasks."
+      },
+      "images": {
+        "title": "Image Generation",
+        "content": "Create unique images with DALL-E 3, Midjourney, Stable Diffusion and other models."
+      },
+      "video": {
+        "title": "Video Generation",
+        "content": "Generate videos from text using Google Veo, Sora 2, Kling and other video models."
+      },
+      "animate": {
+        "title": "Photo Animation",
+        "content": "Transform static images into dynamic videos with Runway, Luma Dream Machine and Kling."
+      },
+      "api": {
+        "title": "API Documentation",
+        "content": "Integrate AI Generator into your projects via our REST API. Available for Pro and Unlimited plans."
+      }
+    }
+  },
+  "Login": {
+    "title": "Sign In",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign In",
+    "or": "or",
+    "google": "Sign in with Google",
+    "github": "Sign in with GitHub",
+    "noAccount": "Don't have an account?",
+    "register": "Sign Up"
+  },
+  "Register": {
+    "title": "Sign Up",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm password",
+    "submit": "Sign Up",
+    "or": "or",
+    "google": "Sign up with Google",
+    "github": "Sign up with GitHub",
+    "hasAccount": "Already have an account?",
+    "login": "Sign In"
+  },
+  "Admin": {
+    "title": "Admin Panel",
+    "apiKeys": {
+      "title": "API Keys Management",
+      "add": "Add key",
+      "service": "Service",
+      "key": "API Key",
+      "name": "Name",
+      "status": "Status",
+      "test": "Test",
+      "save": "Save",
+      "delete": "Delete",
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "stats": {
+      "title": "Usage Statistics",
+      "users": "Users",
+      "generations": "Generations",
+      "tokens": "Tokens Used",
+      "revenue": "Revenue"
+    }
+  }
+}

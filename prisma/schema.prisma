@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("USER") // USER, ADMIN
+  tokens        Int       @default(100) // Free tokens on signup
+  accounts      Account[]
+  sessions      Session[]
+  apiKeys       ApiKey[]
+  tokenHistory  Token[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  name      String
+  key       String   @db.Text
+  service   String   // openai, anthropic, google, replicate, runway, luma, etc.
+  encrypted Boolean  @default(true)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([service, userId])
+  @@index([service])
+  @@index([userId])
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Int
+  type      String   // PURCHASE, CRYPTO_PURCHASE, TELEGRAM_STARS, BONUS, USAGE, REFUND
+  metadata  Json?    // Additional info like order_id, payment_id
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Generation {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // CHAT, IMAGE, VIDEO, ANIMATE
+  model     String
+  prompt    String   @db.Text
+  result    String?  @db.Text
+  tokens    Int      @default(0)
+  status    String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  createdAt DateTime @default(now())
+  
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Subscription {
+  id               String    @id @default(cuid())
+  userId           String    @unique
+  plan             String    // free, starter, pro, unlimited
+  status           String    @default("ACTIVE") // ACTIVE, CANCELLED, EXPIRED
+  provider         String    // lemon_squeezy, crypto, telegram_stars
+  externalId       String?   // External subscription ID
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}

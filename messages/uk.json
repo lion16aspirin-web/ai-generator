@@ -1,0 +1,218 @@
+{
+  "Navigation": {
+    "home": "Головна",
+    "chat": "Чат з ШІ",
+    "images": "Генерація зображень",
+    "video": "Генерація відео",
+    "animate": "Оживлення фото",
+    "pricing": "Тарифи",
+    "docs": "Документація",
+    "settings": "Налаштування",
+    "logout": "Вийти"
+  },
+  "Header": {
+    "search": "Пошук...",
+    "tokens": "токенів",
+    "login": "Увійти"
+  },
+  "Home": {
+    "title": "Створюйте неймовірне з ШІ",
+    "subtitle": "Генеруйте тексти, зображення, відео та анімації за допомогою найкращих AI моделей",
+    "getStarted": "Почати безкоштовно",
+    "features": {
+      "chat": {
+        "title": "Чат з ШІ",
+        "description": "GPT-5, Claude 3 Opus, Gemini 1.5 Pro та інші топові моделі"
+      },
+      "images": {
+        "title": "Генерація зображень",
+        "description": "DALL-E 3, Midjourney, Stable Diffusion, Flux та Kandinsky"
+      },
+      "video": {
+        "title": "Генерація відео",
+        "description": "Google Veo, Sora 2, Kling, PixVerse, Minimax, Wan"
+      },
+      "animate": {
+        "title": "Оживлення фото",
+        "description": "Runway, Luma Dream Machine, Kling для анімації"
+      }
+    }
+  },
+  "Chat": {
+    "title": "Чат з ШІ",
+    "selectModel": "Виберіть модель",
+    "placeholder": "Напишіть ваше повідомлення...",
+    "send": "Надіслати",
+    "models": {
+      "gpt5nano": "GPT-5 nano",
+      "gpt41": "GPT-4.1",
+      "gpt5": "GPT-5",
+      "claude3opus": "Claude 3 Opus",
+      "claude3sonnet": "Claude 3 Sonnet",
+      "gemini15pro": "Gemini 1.5 Pro",
+      "llama3": "Llama 3"
+    }
+  },
+  "Images": {
+    "title": "Генерація зображень",
+    "prompt": "Опишіть зображення",
+    "placeholder": "Опишіть що ви хочете створити...",
+    "generate": "Згенерувати",
+    "selectModel": "Виберіть модель",
+    "size": "Розмір",
+    "style": "Стиль",
+    "models": {
+      "dalle3": "DALL-E 3",
+      "midjourney6": "Midjourney 6",
+      "sdxl": "Stable Diffusion XL",
+      "kandinsky3": "Kandinsky 3.0",
+      "flux": "Flux"
+    }
+  },
+  "Video": {
+    "title": "Генерація відео",
+    "prompt": "Опишіть відео",
+    "placeholder": "Опишіть що повинно бути у відео...",
+    "generate": "Згенерувати",
+    "selectModel": "Виберіть модель",
+    "duration": "Тривалість",
+    "resolution": "Роздільність",
+    "models": {
+      "veo": "Google Veo",
+      "sora2": "Sora 2",
+      "kling": "Kling",
+      "pixverse": "PixVerse",
+      "minimax": "Minimax",
+      "wan": "Wan",
+      "runway": "Runway",
+      "luma": "Luma Dream Machine"
+    }
+  },
+  "Animate": {
+    "title": "Оживлення фото",
+    "subtitle": "Перетворіть статичні зображення на живі відео",
+    "upload": "Завантажте фото",
+    "uploadHint": "Перетягніть або натисніть для вибору",
+    "prompt": "Опис руху (опціонально)",
+    "promptPlaceholder": "Опишіть як повинно рухатися зображення...",
+    "animate": "Оживити",
+    "selectModel": "Виберіть модель",
+    "models": {
+      "runway": "Runway Gen-3",
+      "luma": "Luma Dream Machine",
+      "kling": "Kling"
+    }
+  },
+  "Pricing": {
+    "title": "Тарифні плани",
+    "subtitle": "Виберіть план, який підходить вам найкраще",
+    "monthly": "Щомісяця",
+    "perMonth": "/місяць",
+    "tokens": "токенів",
+    "popular": "Популярний",
+    "subscribe": "Підписатися",
+    "plans": {
+      "free": {
+        "name": "Безкоштовний",
+        "price": "0",
+        "tokens": "100",
+        "features": ["100 токенів щодня", "Базові моделі", "Обмежена швидкість"]
+      },
+      "starter": {
+        "name": "Стартовий",
+        "price": "9",
+        "tokens": "5000",
+        "features": ["5,000 токенів/міс", "Всі AI моделі", "Пріоритетна черга", "Email підтримка"]
+      },
+      "pro": {
+        "name": "Професійний",
+        "price": "29",
+        "tokens": "25000",
+        "features": ["25,000 токенів/міс", "Всі AI моделі", "Найвища пріоритетність", "API доступ", "Преміум підтримка"]
+      },
+      "unlimited": {
+        "name": "Безлімітний",
+        "price": "99",
+        "tokens": "Безлім",
+        "features": ["Безлімітні токени", "Всі AI моделі", "Виділений сервер", "API доступ", "Персональний менеджер"]
+      }
+    }
+  },
+  "Docs": {
+    "title": "Документація",
+    "subtitle": "Дізнайтесь як використовувати AI Generator на повну",
+    "sections": {
+      "getting-started": {
+        "title": "Початок роботи",
+        "content": "Зареєструйтесь та отримайте безкоштовні токени для початку. Виберіть модель та почніть генерувати!"
+      },
+      "chat": {
+        "title": "Чат з AI",
+        "content": "Використовуйте GPT-5, Claude 3, Gemini та інші моделі для генерації текстів, коду, аналізу та творчих завдань."
+      },
+      "images": {
+        "title": "Генерація зображень",
+        "content": "Створюйте унікальні зображення з DALL-E 3, Midjourney, Stable Diffusion та іншими моделями."
+      },
+      "video": {
+        "title": "Генерація відео",
+        "content": "Генеруйте відео з тексту за допомогою Google Veo, Sora 2, Kling та інших відео-моделей."
+      },
+      "animate": {
+        "title": "Оживлення фото",
+        "content": "Перетворіть статичні зображення на динамічні відео з Runway, Luma Dream Machine та Kling."
+      },
+      "api": {
+        "title": "API документація",
+        "content": "Інтегруйте AI Generator у ваші проекти через наш REST API. Доступно для Pro та Unlimited планів."
+      }
+    }
+  },
+  "Login": {
+    "title": "Увійти",
+    "email": "Email",
+    "password": "Пароль",
+    "submit": "Увійти",
+    "or": "або",
+    "google": "Увійти через Google",
+    "github": "Увійти через GitHub",
+    "noAccount": "Немає акаунту?",
+    "register": "Зареєструватися"
+  },
+  "Register": {
+    "title": "Реєстрація",
+    "name": "Ім'я",
+    "email": "Email",
+    "password": "Пароль",
+    "confirmPassword": "Підтвердіть пароль",
+    "submit": "Зареєструватися",
+    "or": "або",
+    "google": "Зареєструватися через Google",
+    "github": "Зареєструватися через GitHub",
+    "hasAccount": "Вже маєте акаунт?",
+    "login": "Увійти"
+  },
+  "Admin": {
+    "title": "Панель адміністратора",
+    "apiKeys": {
+      "title": "Управління API ключами",
+      "add": "Додати ключ",
+      "service": "Сервіс",
+      "key": "API ключ",
+      "name": "Назва",
+      "status": "Статус",
+      "test": "Тестувати",
+      "save": "Зберегти",
+      "delete": "Видалити",
+      "active": "Активний",
+      "inactive": "Неактивний"
+    },
+    "stats": {
+      "title": "Статистика використання",
+      "users": "Користувачів",
+      "generations": "Генерацій",
+      "tokens": "Використано токенів",
+      "revenue": "Дохід"
+    }
+  }
+}
