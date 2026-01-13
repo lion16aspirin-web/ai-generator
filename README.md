@@ -2,6 +2,8 @@
 
 🚀 AI-powered platform for text, image, video generation and photo animation.
 
+> **Version:** 1.0.0 | **Last Updated:** January 13, 2026
+
 ## Features
 
 - 💬 **AI Chat** - GPT-5, Claude 4.5, Gemini 3.0, DeepSeek, Grok and more
