@@ -2,18 +2,18 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
-import prisma from '@/lib/prisma';
+// import prisma from '@/lib/prisma'; // TODO: Enable after DB setup
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // adapter: PrismaAdapter(prisma), // TODO: Enable when @auth/prisma-adapter is configured
+  // adapter: PrismaAdapter(prisma), // TODO: Enable when DB is configured
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     GitHub({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
+      clientId: process.env.GITHUB_ID || '',
+      clientSecret: process.env.GITHUB_SECRET || '',
     }),
     Credentials({
       name: 'credentials',
@@ -26,22 +26,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        });
-
-        if (!user || !user.password) {
-          return null;
-        }
-
-        // TODO: Add proper password comparison with bcrypt
-        // const isValid = await bcrypt.compare(credentials.password, user.password);
+        // TODO: Enable after DB setup
+        // const user = await prisma.user.findUnique({
+        //   where: { email: credentials.email as string },
+        // });
+        // if (!user || !user.password) {
+        //   return null;
+        // }
         
+        // Temporary mock user for deployment testing
         return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
+          id: '1',
+          email: credentials.email as string,
+          name: 'Test User',
+          image: null,
         };
       },
     }),

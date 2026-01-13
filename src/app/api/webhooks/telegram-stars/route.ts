@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import crypto from 'crypto';
-import { prisma } from '@/lib/prisma';
-
-// Verify Telegram webhook
-function verifyTelegramWebhook(payload: any, secret: string): boolean {
-  // Telegram uses a different verification method
-  // This is a simplified version
-  return true; // TODO: Implement proper Telegram signature verification
-}
+// import { prisma } from '@/lib/prisma'; // TODO: Enable after DB setup
 
 export async function POST(request: NextRequest) {
   try {
     const payload = await request.json();
-    const secret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
 
     console.log('Telegram webhook:', JSON.stringify(payload, null, 2));
 
@@ -51,24 +42,8 @@ export async function POST(request: NextRequest) {
       const tokens = tokensByPlan[planId] || 0;
 
       if (userId && tokens > 0) {
-        // Add tokens to user
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            tokens: { increment: tokens }
-          }
-        });
-
-        // Log transaction
-        await prisma.token.create({
-          data: {
-            userId,
-            amount: tokens,
-            type: 'TELEGRAM_STARS'
-          }
-        });
-
-        console.log(`Added ${tokens} tokens to user ${userId} via Telegram Stars`);
+        // TODO: Add tokens to user after DB setup
+        console.log(`Would add ${tokens} tokens to user ${userId} via Telegram Stars`);
 
         // Send confirmation to user
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

@@ -233,3 +233,4 @@ export default function SettingsPage({ params: { locale } }: SettingsPageProps) 
 }
 
 
+
