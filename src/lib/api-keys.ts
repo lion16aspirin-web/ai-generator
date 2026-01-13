@@ -1,4 +1,4 @@
-// import { prisma } from './prisma'; // TODO: Enable after DB setup
+import prisma from './prisma';
 import crypto from 'crypto';
 
 const ENCRYPTION_KEY = process.env.NEXTAUTH_SECRET || 'default-key-change-me';
@@ -42,8 +42,17 @@ export type ServiceType =
   | 'dalle';
 
 export async function getApiKey(service: ServiceType): Promise<string | null> {
-  // TODO: Add database lookup after DB setup
-  // Fallback на env змінні
+  // First try to get from database (admin keys)
+  const apiKey = await prisma.apiKey.findFirst({
+    where: { service },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (apiKey) {
+    return decrypt(apiKey.key);
+  }
+
+  // Fallback to env variables
   const envMap: Record<ServiceType, string | undefined> = {
     'openai': process.env.OPENAI_API_KEY,
     'anthropic': process.env.ANTHROPIC_API_KEY,
@@ -73,13 +82,35 @@ export async function saveApiKey(
   name: string,
   userId: string
 ): Promise<void> {
-  // TODO: Implement after DB setup
-  console.log(`Would save API key for ${service}: ${name}`);
+  const encryptedKey = encrypt(key);
+
+  await prisma.apiKey.upsert({
+    where: {
+      service_userId: {
+        service,
+        userId,
+      },
+    },
+    update: {
+      key: encryptedKey,
+      name,
+    },
+    create: {
+      service,
+      key: encryptedKey,
+      name,
+      userId,
+    },
+  });
 }
 
 export async function deleteApiKey(service: ServiceType, userId: string): Promise<void> {
-  // TODO: Implement after DB setup
-  console.log(`Would delete API key for ${service}`);
+  await prisma.apiKey.deleteMany({
+    where: {
+      service,
+      userId,
+    },
+  });
 }
 
 export async function testApiKey(service: ServiceType, key: string): Promise<boolean> {
@@ -125,7 +156,6 @@ export async function testApiKey(service: ServiceType, key: string): Promise<boo
         return replicateRes.ok;
 
       default:
-        // Для інших сервісів просто повертаємо true
         return true;
     }
   } catch {

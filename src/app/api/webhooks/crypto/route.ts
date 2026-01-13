@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-// import { prisma } from '@/lib/prisma'; // TODO: Enable after DB setup
+import prisma from '@/lib/prisma';
 
 // Verify NOWPayments IPN signature
-function verifyNOWPaymentsSignature(payload: any, signature: string, secret: string): boolean {
+function verifyNOWPaymentsSignature(payload: Record<string, unknown>, signature: string, secret: string): boolean {
   const sortedPayload = Object.keys(payload)
     .sort()
     .reduce((acc, key) => ({ ...acc, [key]: payload[key] }), {});
@@ -12,6 +12,13 @@ function verifyNOWPaymentsSignature(payload: any, signature: string, secret: str
   const digest = hmac.update(JSON.stringify(sortedPayload)).digest('hex');
   return digest === signature;
 }
+
+// Token amounts by plan
+const TOKENS_BY_PLAN: Record<string, number> = {
+  'starter': 5000,
+  'pro': 25000,
+  'unlimited': 1000000,
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,23 +36,58 @@ export async function POST(request: NextRequest) {
     const {
       payment_status,
       order_id,
+      payment_id,
     } = payload;
 
     // Parse order_id for user info (format: userId_planId_timestamp)
     const [userId, planId] = (order_id || '').split('_');
 
     if (payment_status === 'finished' && userId && planId) {
-      // Token amounts by plan
-      const tokensByPlan: Record<string, number> = {
-        'starter': 5000,
-        'pro': 25000,
-        'unlimited': 1000000,
-      };
+      const tokens = TOKENS_BY_PLAN[planId] || 0;
 
-      const tokens = tokensByPlan[planId] || 0;
+      if (tokens > 0) {
+        // Add tokens to user
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            tokens: { increment: tokens },
+          },
+        });
 
-      // TODO: Add tokens to user after DB setup
-      console.log(`Would add ${tokens} tokens to user ${userId} via crypto payment`);
+        // Log token purchase
+        await prisma.token.create({
+          data: {
+            userId,
+            amount: tokens,
+            type: 'CRYPTO_PURCHASE',
+            metadata: {
+              planId,
+              paymentId: payment_id,
+              provider: 'nowpayments',
+            },
+          },
+        });
+
+        // Create/update subscription
+        await prisma.subscription.upsert({
+          where: { userId },
+          update: {
+            plan: planId,
+            status: 'ACTIVE',
+            provider: 'crypto',
+            externalId: payment_id?.toString(),
+          },
+          create: {
+            userId,
+            plan: planId,
+            status: 'ACTIVE',
+            provider: 'crypto',
+            externalId: payment_id?.toString(),
+          },
+        });
+
+        console.log(`Added ${tokens} tokens to user ${userId} via crypto payment`);
+      }
     }
 
     return NextResponse.json({ received: true });

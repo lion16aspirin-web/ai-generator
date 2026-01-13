@@ -2,10 +2,12 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import GitHub from 'next-auth/providers/github';
 import Credentials from 'next-auth/providers/credentials';
-// import prisma from '@/lib/prisma'; // TODO: Enable after DB setup
+import { PrismaAdapter } from '@auth/prisma-adapter';
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  // adapter: PrismaAdapter(prisma), // TODO: Enable when DB is configured
+  adapter: PrismaAdapter(prisma),
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
@@ -26,20 +28,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // TODO: Enable after DB setup
-        // const user = await prisma.user.findUnique({
-        //   where: { email: credentials.email as string },
-        // });
-        // if (!user || !user.password) {
-        //   return null;
-        // }
-        
-        // Temporary mock user for deployment testing
+        const user = await prisma.user.findUnique({
+          where: { email: credentials.email as string },
+        });
+
+        if (!user || !user.password) {
+          return null;
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+          credentials.password as string,
+          user.password
+        );
+
+        if (!isPasswordValid) {
+          return null;
+        }
+
         return {
-          id: '1',
-          email: credentials.email as string,
-          name: 'Test User',
-          image: null,
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
         };
       },
     }),
@@ -51,12 +61,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Get user role from database
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: { role: true, tokens: true },
+        });
+        if (dbUser) {
+          token.role = dbUser.role;
+          token.tokens = dbUser.tokens;
+        }
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        (session.user as { role?: string }).role = token.role as string;
+        (session.user as { tokens?: number }).tokens = token.tokens as number;
       }
       return session;
     },

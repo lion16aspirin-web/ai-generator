@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-// import { prisma } from '@/lib/prisma'; // TODO: Enable after DB setup
+import prisma from '@/lib/prisma';
+import { saveApiKey, deleteApiKey, testApiKey, ServiceType } from '@/lib/api-keys';
 
-// Check if user is admin (temporary mock)
+// Check if user is admin
 async function isAdmin(userId: string): Promise<boolean> {
-  // TODO: Implement proper admin check with DB
-  return true;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  return user?.role === 'ADMIN';
 }
 
 // GET - List all API keys
@@ -21,8 +25,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // TODO: Implement after DB setup
-    return NextResponse.json({ apiKeys: [] });
+    const apiKeys = await prisma.apiKey.findMany({
+      where: { userId: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        service: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return NextResponse.json({ apiKeys });
   } catch (error) {
     console.error('Get API keys error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -48,7 +63,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // TODO: Implement after DB setup
+    await saveApiKey(service as ServiceType, key, name, session.user.id);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Save API key error:', error);
@@ -69,7 +85,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // TODO: Implement after DB setup
+    const { searchParams } = new URL(request.url);
+    const service = searchParams.get('service');
+
+    if (!service) {
+      return NextResponse.json({ error: 'Service is required' }, { status: 400 });
+    }
+
+    await deleteApiKey(service as ServiceType, session.user.id);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Delete API key error:', error);
@@ -96,8 +120,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Service and key are required' }, { status: 400 });
     }
 
-    // TODO: Implement after DB setup
-    return NextResponse.json({ valid: true });
+    const valid = await testApiKey(service as ServiceType, key);
+
+    return NextResponse.json({ valid });
   } catch (error) {
     console.error('Test API key error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

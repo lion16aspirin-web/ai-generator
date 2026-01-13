@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { prisma } from '@/lib/prisma'; // TODO: Enable after DB setup
+import prisma from '@/lib/prisma';
+
+// Token amounts by plan (Telegram Stars pricing)
+const TOKENS_BY_PLAN: Record<string, number> = {
+  'starter': 5000,    // 50 Stars
+  'pro': 25000,       // 200 Stars
+  'unlimited': 1000000 // 500 Stars
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,18 +39,49 @@ export async function POST(request: NextRequest) {
       // Parse invoice payload (format: planId_userId)
       const [planId, userId] = (payment.invoice_payload || '').split('_');
       
-      // Token amounts by plan (Telegram Stars pricing)
-      const tokensByPlan: Record<string, number> = {
-        'starter': 5000,    // 50 Stars
-        'pro': 25000,       // 200 Stars
-        'unlimited': 1000000 // 500 Stars
-      };
-
-      const tokens = tokensByPlan[planId] || 0;
+      const tokens = TOKENS_BY_PLAN[planId] || 0;
 
       if (userId && tokens > 0) {
-        // TODO: Add tokens to user after DB setup
-        console.log(`Would add ${tokens} tokens to user ${userId} via Telegram Stars`);
+        // Add tokens to user
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            tokens: { increment: tokens },
+          },
+        });
+
+        // Log token purchase
+        await prisma.token.create({
+          data: {
+            userId,
+            amount: tokens,
+            type: 'TELEGRAM_STARS',
+            metadata: {
+              planId,
+              telegramUserId,
+              totalAmount: payment.total_amount,
+              currency: payment.currency,
+            },
+          },
+        });
+
+        // Create/update subscription
+        await prisma.subscription.upsert({
+          where: { userId },
+          update: {
+            plan: planId,
+            status: 'ACTIVE',
+            provider: 'telegram_stars',
+          },
+          create: {
+            userId,
+            plan: planId,
+            status: 'ACTIVE',
+            provider: 'telegram_stars',
+          },
+        });
+
+        console.log(`Added ${tokens} tokens to user ${userId} via Telegram Stars`);
 
         // Send confirmation to user
         await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {

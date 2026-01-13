@@ -1,4 +1,4 @@
-# AI Generator Platform
+# AI Generator v1.0.1 Platform
 
 🚀 AI-powered platform for text, image, video generation and photo animation.
 
