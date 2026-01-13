@@ -12,6 +12,7 @@
     "db:studio": "prisma studio"
   },
   "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
     "@anthropic-ai/sdk": "^0.33.0",
     "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^6.2.0",
