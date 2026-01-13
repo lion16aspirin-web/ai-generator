@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Lock, User, Sparkles } from 'lucide-react';
 
 interface RegisterPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function RegisterPage({ params: { locale } }: RegisterPageProps) {
+export default function RegisterPage({ params }: RegisterPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Register');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

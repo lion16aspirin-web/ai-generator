@@ -1,3 +1,6 @@
+'use client';
+
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -15,10 +18,11 @@ import {
 } from 'lucide-react';
 
 interface HomePageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function HomePage({ params: { locale } }: HomePageProps) {
+export default function HomePage({ params }: HomePageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Home');
 
   const features = [

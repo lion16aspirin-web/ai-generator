@@ -1,3 +1,6 @@
+'use client';
+
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -5,10 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Sparkles, Zap, Crown, Infinity } from 'lucide-react';
 
 interface PricingPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function PricingPage({ params: { locale } }: PricingPageProps) {
+export default function PricingPage({ params }: PricingPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Pricing');
 
   const plans = [

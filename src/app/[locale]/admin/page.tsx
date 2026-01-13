@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 interface AdminPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 interface ApiKeyConfig {
@@ -47,7 +47,8 @@ const SERVICES = [
   { value: 'midjourney', label: 'Midjourney' },
 ];
 
-export default function AdminPage({ params: { locale } }: AdminPageProps) {
+export default function AdminPage({ params }: AdminPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Admin');
   const [apiKeys, setApiKeys] = useState<ApiKeyConfig[]>([
     { id: '1', service: 'openai', name: 'Main OpenAI Key', key: 'sk-...hidden', status: 'active' },

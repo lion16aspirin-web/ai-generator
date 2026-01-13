@@ -1,3 +1,6 @@
+'use client';
+
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,10 +14,11 @@ import {
 } from 'lucide-react';
 
 interface DocsPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function DocsPage({ params: { locale } }: DocsPageProps) {
+export default function DocsPage({ params }: DocsPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Docs');
 
   const sections = [

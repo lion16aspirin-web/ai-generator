@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Wand2, Upload, Download, Play, ImageIcon, X } from 'lucide-react';
 
 interface AnimatePageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function AnimatePage({ params: { locale } }: AnimatePageProps) {
+export default function AnimatePage({ params }: AnimatePageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Animate');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);

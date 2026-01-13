@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Send, Bot, User, Sparkles } from 'lucide-react';
 
 interface ChatPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
 interface Message {
@@ -19,7 +19,8 @@ interface Message {
   content: string;
 }
 
-export default function ChatPage({ params: { locale } }: ChatPageProps) {
+export default function ChatPage({ params }: ChatPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Chat');
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');

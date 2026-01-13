@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, Lock, Sparkles } from 'lucide-react';
 
 interface LoginPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function LoginPage({ params: { locale } }: LoginPageProps) {
+export default function LoginPage({ params }: LoginPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

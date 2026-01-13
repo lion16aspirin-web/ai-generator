@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -19,10 +19,11 @@ import {
 } from 'lucide-react';
 
 interface SettingsPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function SettingsPage({ params: { locale } }: SettingsPageProps) {
+export default function SettingsPage({ params }: SettingsPageProps) {
+  const { locale } = React.use(params);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [notifications, setNotifications] = useState(true);

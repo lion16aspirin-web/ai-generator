@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -10,10 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Video, Download, Play, Clock, Maximize } from 'lucide-react';
 
 interface VideoPageProps {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 }
 
-export default function VideoPage({ params: { locale } }: VideoPageProps) {
+export default function VideoPage({ params }: VideoPageProps) {
+  const { locale } = React.use(params);
   const t = useTranslations('Video');
   const [prompt, setPrompt] = useState('');
   const [model, setModel] = useState('veo');
