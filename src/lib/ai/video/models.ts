@@ -149,6 +149,28 @@ export function formatDuration(seconds: number): string {
   return secs > 0 ? `${mins} хв ${secs} сек` : `${mins} хв`;
 }
 
+/**
+ * Оцінка часу генерації по моделі
+ */
+export function estimateGenerationTime(
+  modelId: string, 
+  durationSeconds: number
+): number {
+  const estimates: Record<string, number> = {
+    'sora-2': 180,
+    'sora-2-pro': 240,
+    'veo-3.1': 120,
+    'veo-3.1-flash': 60,
+    'kling-2.1-pro': 45,
+    'pixverse-v4': 60,
+    'minimax-hailuo': 90,
+    'wan-2.0': 30,
+  };
+
+  const base = estimates[modelId] || 60;
+  return Math.ceil(base * (durationSeconds / 5));
+}
+
 // ============================================
 // ЕКСПОРТ
 // ============================================
