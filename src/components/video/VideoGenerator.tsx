@@ -29,10 +29,14 @@ export function VideoGenerator() {
 
   // Налаштування
   const [prompt, setPrompt] = useState('');
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<{
+    duration: number;
+    resolution: VideoResolution;
+    sourceImage?: string;
+  }>({
     duration: 5,
-    resolution: '1080p' as VideoResolution,
-    sourceImage: undefined as string | undefined,
+    resolution: '1080p',
+    sourceImage: undefined,
   });
 
   const handleGenerate = async () => {
