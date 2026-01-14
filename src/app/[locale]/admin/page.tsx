@@ -21,6 +21,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
+import { ModelStatusDashboard } from '@/components/admin/ModelStatusDashboard';
 
 interface AdminPageProps {
   params: Promise<{ locale: string }>;
@@ -121,6 +122,16 @@ export default function AdminPage({ params }: AdminPageProps) {
             </Card>
           ))}
         </div>
+
+        {/* Models Status Dashboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Статус підключень до нейромереж</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ModelStatusDashboard />
+          </CardContent>
+        </Card>
 
         {/* API Keys Management */}
         <Card>

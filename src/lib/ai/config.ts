@@ -460,17 +460,23 @@ export const DEFAULT_ANIMATION_MODEL = 'photo-animation';
 // ============================================
 
 export const OPENROUTER_MODEL_MAP: Record<string, string> = {
-  'gpt-5': 'openai/gpt-5',
-  'gpt-5.1': 'openai/gpt-5.1',
-  'gpt-5.2': 'openai/gpt-5.2',
-  'gpt-5-nano': 'openai/gpt-5-nano',
-  'claude-4.5-sonnet': 'anthropic/claude-4.5-sonnet',
-  'claude-4.5-haiku': 'anthropic/claude-4.5-haiku',
-  'gemini-3.0-flash': 'google/gemini-3.0-flash',
-  'gemini-3.0-pro': 'google/gemini-3.0-pro',
+  // OpenAI (використовуємо актуальні моделі)
+  'gpt-5': 'openai/gpt-4o', // Fallback на gpt-4o якщо gpt-5 не існує
+  'gpt-5.1': 'openai/gpt-4o-2024-11-20', // Остання версія GPT-4o
+  'gpt-5.2': 'openai/gpt-4-turbo', // Потужніша модель
+  'gpt-5-nano': 'openai/gpt-4o-mini', // Швидка та економна
+  // Anthropic
+  'claude-4.5-sonnet': 'anthropic/claude-3.5-sonnet', // Актуальна версія
+  'claude-4.5-haiku': 'anthropic/claude-3-haiku', // Швидка версія
+  // Google
+  'gemini-3.0-flash': 'google/gemini-2.0-flash-exp', // Актуальна версія
+  'gemini-3.0-pro': 'google/gemini-2.0-flash-thinking-exp', // Pro версія
+  // DeepSeek
   'deepseek-v3': 'deepseek/deepseek-chat',
   'deepseek-r1': 'deepseek/deepseek-reasoner',
-  'grok-4': 'x-ai/grok-4',
-  'grok-4-max': 'x-ai/grok-4-max',
-  'kimi-k2': 'moonshot/kimi-k2',
+  // xAI
+  'grok-4': 'x-ai/grok-beta',
+  'grok-4-max': 'x-ai/grok-beta',
+  // Moonshot
+  'kimi-k2': 'moonshot/kimi-v1.5',
 };
