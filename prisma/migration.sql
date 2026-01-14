@@ -153,3 +153,4 @@ VALUES (
 
 SELECT 'Database migration completed!' as status;
 
+

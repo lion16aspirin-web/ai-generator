@@ -5,3 +5,4 @@ echo.
 cd /d E:\проекти\ai-generator
 npm run dev
 
+

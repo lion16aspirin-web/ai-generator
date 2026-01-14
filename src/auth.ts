@@ -12,6 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || '',
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      allowDangerousEmailAccountLinking: true,
     }),
     GitHub({
       clientId: process.env.GITHUB_ID || '',
@@ -58,7 +59,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: 'jwt',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      // Allow OAuth sign in
+      if (account?.provider === 'google' || account?.provider === 'github') {
+        return true;
+      }
+      // Allow credentials sign in
+      if (account?.provider === 'credentials') {
+        return true;
+      }
+      return true;
+    },
+    async redirect({ url, baseUrl }) {
+      // Handle OAuth redirects properly
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
+      if (url.startsWith(baseUrl)) {
+        return url;
+      }
+      return baseUrl;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         // Get user role from database

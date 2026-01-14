@@ -49,7 +49,9 @@ export default function LoginPage({ params }: LoginPageProps) {
   };
 
   const handleOAuthSignIn = (provider: 'google' | 'github') => {
-    signIn(provider, { callbackUrl: `/${locale}` });
+    // Use full URL for OAuth callback
+    const baseUrl = window.location.origin;
+    signIn(provider, { callbackUrl: `${baseUrl}/${locale}` });
   };
 
   return (
