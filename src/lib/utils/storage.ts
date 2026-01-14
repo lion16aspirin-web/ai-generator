@@ -73,7 +73,13 @@ export async function uploadToCloudinary(
   const signature = await generateCloudinarySignature(timestamp, apiSecret);
 
   const formData = new FormData();
-  formData.append('file', typeof file === 'string' ? file : new Blob([file]));
+  if (typeof file === 'string') {
+    formData.append('file', file);
+  } else {
+    // Конвертуємо Buffer в Uint8Array для Blob
+    const uint8Array = new Uint8Array(file);
+    formData.append('file', new Blob([uint8Array]));
+  }
   formData.append('timestamp', timestamp.toString());
   formData.append('api_key', apiKey);
   formData.append('signature', signature);
