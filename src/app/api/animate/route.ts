@@ -1,128 +1,120 @@
+/**
+ * Animate API - Анімація фото
+ * POST /api/animate
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKey } from '@/lib/api-keys';
+import { auth } from '@/auth';
+import { createAnimationJob } from '@/lib/ai/animation';
+import { calculateAnimationCost } from '@/lib/ai/pricing';
+import { deductTokens, getUserTokens } from '@/lib/utils/tokens';
+import { AIError } from '@/lib/ai/types';
+
+export const runtime = 'nodejs';
+export const maxDuration = 30;
+
+interface AnimateRequestBody {
+  model?: string;
+  image: string;
+  prompt?: string;
+  duration?: number;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { image, prompt, model } = await request.json();
+    // Авторизація
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Потрібна авторизація' },
+        { status: 401 }
+      );
+    }
 
+    const userId = session.user.id;
+
+    // Парсинг body
+    const body: AnimateRequestBody = await request.json();
+    const { 
+      model = 'photo-animation', 
+      image, 
+      prompt,
+      duration = 3,
+    } = body;
+
+    // Валідація
     if (!image) {
-      return NextResponse.json({ error: 'Image is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Зображення не вказано' },
+        { status: 400 }
+      );
     }
 
-    let video: string | null = null;
-
-    switch (model) {
-      case 'runway':
-        const runwayKey = await getApiKey('runway');
-        if (!runwayKey) {
-          return NextResponse.json({ error: 'Runway API key not configured' }, { status: 400 });
-        }
-        
-        // Runway Gen-3 Image-to-Video API
-        const runwayRes = await fetch('https://api.runwayml.com/v1/image-to-video', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${runwayKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gen3a_turbo',
-            promptImage: image,
-            promptText: prompt || 'subtle natural movement',
-            duration: 5,
-            ratio: '16:9',
-          }),
-        });
-        
-        const runwayData = await runwayRes.json();
-        
-        // Poll for result
-        if (runwayData.id) {
-          let result = runwayData;
-          let attempts = 0;
-          const maxAttempts = 60; // 5 minutes max
-          
-          while (result.status !== 'SUCCEEDED' && result.status !== 'FAILED' && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            const pollRes = await fetch(`https://api.runwayml.com/v1/tasks/${runwayData.id}`, {
-              headers: { 'Authorization': `Bearer ${runwayKey}` },
-            });
-            result = await pollRes.json();
-            attempts++;
-          }
-          
-          if (result.status === 'SUCCEEDED' && result.output) {
-            video = result.output[0];
-          }
-        }
-        break;
-
-      case 'luma':
-        const lumaKey = await getApiKey('luma');
-        if (!lumaKey) {
-          return NextResponse.json({ error: 'Luma API key not configured' }, { status: 400 });
-        }
-        
-        // Luma Dream Machine Image-to-Video
-        const lumaRes = await fetch('https://api.lumalabs.ai/dream-machine/v1/generations/image', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${lumaKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt: prompt || 'natural motion',
-            keyframes: {
-              frame0: {
-                type: 'image',
-                url: image
-              }
-            },
-          }),
-        });
-        
-        const lumaData = await lumaRes.json();
-        
-        // Poll for completion
-        if (lumaData.id) {
-          let result = lumaData;
-          let attempts = 0;
-          const maxAttempts = 60;
-          
-          while ((result.state === 'pending' || result.state === 'processing') && attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            const pollRes = await fetch(`https://api.lumalabs.ai/dream-machine/v1/generations/${lumaData.id}`, {
-              headers: { 'Authorization': `Bearer ${lumaKey}` },
-            });
-            result = await pollRes.json();
-            attempts++;
-          }
-          
-          if (result.state === 'completed' && result.assets?.video) {
-            video = result.assets.video;
-          }
-        }
-        break;
-
-      case 'kling':
-        const klingKey = await getApiKey('kling');
-        if (!klingKey) {
-          return NextResponse.json({ error: 'Kling API key not configured' }, { status: 400 });
-        }
-        
-        // Kling Image-to-Video (placeholder)
-        return NextResponse.json({ 
-          error: 'Kling Image-to-Video API integration pending',
-          video: null
-        });
-
-      default:
-        return NextResponse.json({ error: 'Unknown model' }, { status: 400 });
+    // Перевірка формату зображення
+    if (!image.startsWith('data:image/') && !image.startsWith('http')) {
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Невірний формат зображення' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ video });
+    if (duration < 2 || duration > 5) {
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Тривалість має бути від 2 до 5 секунд' },
+        { status: 400 }
+      );
+    }
+
+    // Розрахунок вартості
+    const estimatedCost = calculateAnimationCost(model);
+
+    // Перевірка балансу
+    const userTokens = await getUserTokens(userId);
+    if (userTokens.available < estimatedCost.platformTokens) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient Tokens', 
+          message: 'Недостатньо токенів',
+          required: estimatedCost.platformTokens,
+          available: userTokens.available,
+        },
+        { status: 402 }
+      );
+    }
+
+    // Списуємо токени перед генерацією
+    await deductTokens(userId, estimatedCost.platformTokens, `animate:${model}`);
+
+    // Створюємо job
+    const job = await createAnimationJob({
+      model,
+      image,
+      prompt,
+      duration,
+    });
+
+    return NextResponse.json({
+      ...job,
+      estimatedTime: 30 + duration * 10,
+    });
+
   } catch (error) {
-    console.error('Animation error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Animate API error:', error);
+
+    if (error instanceof AIError) {
+      return NextResponse.json(
+        { 
+          error: error.code, 
+          message: error.message,
+          provider: error.provider,
+        },
+        { status: error.statusCode || 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal Error', message: 'Внутрішня помилка сервера' },
+      { status: 500 }
+    );
   }
 }

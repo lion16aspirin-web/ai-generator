@@ -43,86 +43,40 @@
 
 ---
 
-## 🔄 ФАЗА 2: База даних (В процесі)
+## ✅ ФАЗА 2: База даних (Завершено)
 
 ### Neon PostgreSQL
-- [ ] Створити Neon акаунт
-- [ ] Отримати Connection String
-- [ ] Додати DATABASE_URL в Vercel
+- [x] Створити Neon акаунт
+- [x] Отримати Connection String
+- [x] Додати DATABASE_URL в Vercel
 
 ### Prisma ORM
-- [ ] Повернути @prisma/client
-- [ ] Налаштувати prisma generate
-- [ ] Виконати prisma db push
-- [ ] Створити міграції
-
-### Схема бази даних
-```prisma
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          Role      @default(USER)
-  tokens        Int       @default(100)
-  accounts      Account[]
-  sessions      Session[]
-  generations   Generation[]
-  subscription  Subscription?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model ApiKey {
-  id        String   @id @default(cuid())
-  service   String   // openai, anthropic, replicate...
-  name      String
-  key       String   // encrypted
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Generation {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String   // chat, image, video, animate
-  model     String
-  prompt    String
-  result    String?
-  tokens    Int
-  createdAt DateTime @default(now())
-}
-
-model Subscription {
-  id             String   @id @default(cuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id])
-  plan           String   // free, starter, pro, unlimited
-  tokensPerMonth Int
-  expiresAt      DateTime?
-  createdAt      DateTime @default(now())
-}
-```
+- [x] Повернути @prisma/client
+- [x] Налаштувати prisma generate
+- [x] Виконати prisma db push
+- [x] Створити міграції
 
 ---
 
-## 🔐 ФАЗА 3: Автентифікація
+## ✅ ФАЗА 3: Автентифікація (Завершено)
 
 ### NextAuth.js v5
-- [ ] Увімкнути PrismaAdapter
-- [ ] Google OAuth Provider
-- [ ] GitHub OAuth Provider
-- [ ] Credentials Provider (email/password)
-- [ ] Session management
+- [x] Увімкнути PrismaAdapter 
+- [x] Google OAuth Provider
+- [x] GitHub OAuth Provider
+- [x] Credentials Provider (email/password)
+- [x] Session management
 
 ### Налаштування OAuth
-- [ ] Google Cloud Console - створити OAuth credentials
-- [ ] GitHub Settings - створити OAuth App
-- [ ] Додати callback URLs в Vercel
+- [x] Google Cloud Console - OAuth credentials
+- [x] GitHub Settings - OAuth App
+- [x] Callback URLs в Vercel
+
+### Форма реєстрації
+- [ ] Валідація полів (email, пароль)
+- [ ] Перевірка на існуючий email
+- [ ] Хешування паролів (bcrypt)
+- [ ] Email підтвердження (опціонально)
 
 ### Захист роутів
 - [ ] Middleware для захисту /admin
@@ -131,41 +85,69 @@ model Subscription {
 
 ---
 
+## 📚 ФАЗА 3.5: Документація (Завершено)
+
+### Гайди по нейромережах
+- [x] Головний каталог AI_MODELS.md
+- [x] GPT-5 / GPT-5.1 / GPT-5.2 / GPT-5 nano
+- [x] Claude 4.5 Sonnet / Haiku
+- [x] Gemini 3.0 Flash / Pro
+- [x] DeepSeek V3 / R1
+- [x] Grok 4 / Max
+- [x] Kimi K2
+- [x] DALL-E 3, FLUX, Midjourney, Ideogram, Recraft
+- [x] Sora 2, Veo 3.1, Kling, PixVerse, Minimax, Wan
+- [x] Photo Animation
+
+### Покращення документації
+- [ ] Інтерактивні приклади промптів
+- [ ] Відео-туторіали (YouTube embeds)
+- [ ] Порівняльні таблиці з реальними прикладами
+- [ ] Галерея результатів для кожної моделі
+- [ ] Калькулятор вартості токенів
+- [ ] Пошук по документації
+
+---
+
 ## 🤖 ФАЗА 4: AI Інтеграції
 
-### Текстові моделі
-- [ ] OpenAI GPT-4/GPT-5
-- [ ] Anthropic Claude 3
-- [ ] Google Gemini 1.5 Pro
-- [ ] DeepSeek
-- [ ] xAI Grok
-- [ ] MoonshotAI Kimi K2
+### Підхід до інтеграції
+- [ ] **OpenRouter API** — єдиний ключ для всіх LLM
+- [ ] Fallback на прямі API якщо потрібно
+
+### Текстові моделі (через OpenRouter)
+- [ ] OpenAI GPT-5 / GPT-5.1 / GPT-5.2 / nano
+- [ ] Anthropic Claude 4.5 Sonnet / Haiku
+- [ ] Google Gemini 3.0 Flash / Pro
+- [ ] DeepSeek V3 / R1
+- [ ] xAI Grok 4 / Max
+- [ ] Moonshot Kimi K2
 
 ### Генерація зображень
-- [ ] OpenAI DALL-E 3
-- [ ] Replicate (Flux, Stable Diffusion)
-- [ ] Midjourney API (якщо доступний)
-- [ ] Kandinsky
+- [ ] OpenAI DALL-E 3 / GPT Image
+- [ ] Replicate (FLUX, Midjourney proxy)
+- [ ] Ideogram API
+- [ ] Recraft API
+- [ ] Google Imagen 4
 
 ### Генерація відео
-- [ ] Google Veo
 - [ ] OpenAI Sora 2
-- [ ] Kling
-- [ ] PixVerse
-- [ ] Minimax
-- [ ] Wan
-- [ ] Runway Gen-3
-- [ ] Luma Dream Machine
+- [ ] Google Veo 3.1
+- [ ] Kling API
+- [ ] PixVerse API
+- [ ] Minimax Hailuo
+- [ ] Wan 2.0
 
 ### Анімація фото
-- [ ] Runway Gen-3
-- [ ] Luma Dream Machine
-- [ ] Kling
+- [ ] Kling Live Portrait
+- [ ] D-ID / HeyGen альтернативи
 
-### Адмін панель
-- [ ] Збереження API ключів (зашифровано)
-- [ ] Тестування ключів
-- [ ] Увімкнення/вимкнення сервісів
+### UI для генерації
+- [ ] Селектор моделі з описом
+- [ ] Показ вартості перед генерацією
+- [ ] Прогрес-бар під час генерації
+- [ ] Історія запитів з результатами
+- [ ] Завантаження результатів
 
 ---
 
@@ -176,11 +158,11 @@ model Subscription {
 - [ ] Створити продукти (тарифи)
 - [ ] Інтегрувати Checkout
 - [ ] Налаштувати Webhook
+- [ ] Subscription management
 
 ### NOWPayments (крипто)
 - [ ] Створити акаунт
-- [ ] Отримати API ключі
-- [ ] Інтегрувати оплату
+- [ ] Інтегрувати оплату BTC/ETH/USDT
 - [ ] Налаштувати IPN Webhook
 
 ### Telegram Stars
@@ -188,59 +170,207 @@ model Subscription {
 - [ ] Налаштувати aiogram
 - [ ] Інтегрувати Telegram Payments
 - [ ] Webhook для підтвердження
+- [ ] Синхронізація токенів з веб-аккаунтом
 
-### Тарифні плани
-| План | Токенів | Ціна |
-|------|---------|------|
-| Free | 100 | $0 |
-| Starter | 10,000 | $9.99 |
-| Pro | 100,000 | $29.99 |
-| Unlimited | ∞ | $99.99 |
+### Тарифні плани (оновлені)
+| План | Токенів/міс | Ціна | Особливості |
+|------|-------------|------|-------------|
+| Free | 100 | $0 | Базові моделі |
+| Starter | 50,000 | $9.99 | Всі моделі |
+| Pro | 200,000 | $29.99 | + Пріоритет |
+| Business | 1,000,000 | $99.99 | + API доступ |
+
+### Реферальна програма
+- [ ] Унікальні реф-посилання
+- [ ] Бонус за запрошених (10% токенів)
+- [ ] Дашборд рефералів
+- [ ] Виведення заробленого
 
 ---
 
-## 🔧 ФАЗА 6: Оптимізація
+## 🎨 ФАЗА 6: UX Покращення
+
+### Інтерфейс чату
+- [ ] Streaming відповідей (SSE)
+- [ ] Markdown рендеринг з підсвіткою коду
+- [ ] Копіювання коду одним кліком
+- [ ] Регенерація відповіді
+- [ ] Редагування попередніх повідомлень
+- [ ] Експорт розмови (PDF/MD)
+
+### Галерея зображень
+- [ ] Masonry layout для результатів
+- [ ] Lightbox перегляд
+- [ ] Варіації зображень
+- [ ] Upscale / Enhance
+- [ ] Inpainting (редагування частин)
+- [ ] Image-to-image
+
+### Відео студія
+- [ ] Таймлайн прев'ю
+- [ ] Комбінування кліпів
+- [ ] Додавання музики
+- [ ] Субтитри (автоматичні)
+- [ ] Експорт в різних форматах
+
+### Prompt Engineering
+- [ ] Бібліотека готових промптів
+- [ ] Prompt templates з параметрами
+- [ ] AI помічник для покращення промптів
+- [ ] Збереження улюблених промптів
+- [ ] Шаринг промптів спільнотою
+
+---
+
+## 🔧 ФАЗА 7: Оптимізація
 
 ### Performance
-- [ ] Image optimization
-- [ ] Code splitting
-- [ ] Lazy loading
-- [ ] Caching strategies
+- [ ] Image optimization (next/image)
+- [ ] Code splitting (dynamic imports)
+- [ ] Lazy loading компонентів
+- [ ] Redis caching для частих запитів
+- [ ] CDN для медіа файлів
 
 ### SEO
-- [ ] Meta tags
-- [ ] Open Graph
-- [ ] Sitemap
+- [ ] Meta tags для всіх сторінок
+- [ ] Open Graph previews
+- [ ] Structured data (JSON-LD)
+- [ ] Sitemap.xml
 - [ ] robots.txt
+- [ ] Blog з SEO статтями
 
 ### Analytics
 - [ ] Vercel Analytics
-- [ ] Google Analytics (опціонально)
+- [ ] PostHog (продуктова аналітика)
+- [ ] Funnel tracking (реєстрація → оплата)
+- [ ] Heatmaps
 
 ### Моніторинг
-- [ ] Error tracking (Sentry)
+- [ ] Sentry (error tracking)
 - [ ] Uptime monitoring
+- [ ] API response time tracking
+- [ ] Alerting (Telegram/Email)
 
 ---
 
-## 📱 ФАЗА 7: Розширення (Майбутнє)
+## 🌐 ФАЗА 8: Інтернаціоналізація
 
-### Mobile App
-- [ ] React Native версія
-- [ ] iOS публікація
-- [ ] Android публікація
+### Мови
+- [x] Українська (uk)
+- [x] Англійська (en)
+- [ ] Російська (ru)
+- [ ] Польська (pl)
+- [ ] Німецька (de)
+- [ ] Іспанська (es)
 
-### API для розробників
-- [ ] REST API
-- [ ] API ключі для користувачів
+### Локалізація
+- [ ] Автовизначення мови
+- [ ] Переклад документації
+- [ ] Локалізовані приклади промптів
+- [ ] Валюта по регіону
+
+---
+
+## 📱 ФАЗА 9: Mobile & Desktop
+
+### PWA
+- [ ] Service Worker
+- [ ] Offline mode (базовий)
+- [ ] Push notifications
+- [ ] Install prompt
+- [ ] App-like experience
+
+### Telegram Mini App
+- [ ] WebApp інтеграція
+- [ ] Авторизація через Telegram
+- [ ] Оплата Stars напряму
+- [ ] Шаринг результатів в чат
+
+### Desktop App (опціонально)
+- [ ] Electron wrapper
+- [ ] Системний трей
+- [ ] Гарячі клавіші
+- [ ] Автооновлення
+
+---
+
+## 🔌 ФАЗА 10: API для розробників
+
+### REST API
+- [ ] /api/v1/chat/completions
+- [ ] /api/v1/images/generations
+- [ ] /api/v1/video/generations
+- [ ] /api/v1/animate
 - [ ] Rate limiting
-- [ ] Документація Swagger
+- [ ] API ключі для користувачів
 
-### Додаткові функції
-- [ ] Історія генерацій
-- [ ] Галерея користувача
-- [ ] Шаринг результатів
-- [ ] Командна робота
+### Документація API
+- [ ] Swagger / OpenAPI spec
+- [ ] Інтерактивна пісочниця
+- [ ] SDK для Python/JS
+- [ ] Приклади інтеграцій
+
+### Webhooks
+- [ ] Callback на завершення генерації
+- [ ] Events (new_user, payment, etc.)
+
+---
+
+## 🏢 ФАЗА 11: Enterprise Features
+
+### Команди
+- [ ] Створення workspace
+- [ ] Запрошення учасників
+- [ ] Ролі (admin, member, viewer)
+- [ ] Shared токени
+- [ ] Billing per workspace
+
+### Безпека
+- [ ] 2FA (TOTP)
+- [ ] SSO (SAML/OIDC)
+- [ ] Audit logs
+- [ ] Data retention policies
+- [ ] GDPR compliance
+
+### White-label
+- [ ] Custom domain
+- [ ] Брендинг (логотип, кольори)
+- [ ] Custom email templates
+- [ ] Reseller program
+
+---
+
+## 🎮 ФАЗА 12: Gamification & Community
+
+### Досягнення
+- [ ] Badges за активність
+- [ ] Рівні користувача
+- [ ] Leaderboard
+- [ ] Daily rewards
+
+### Спільнота
+- [ ] Публічна галерея робіт
+- [ ] Коментарі та лайки
+- [ ] Follow інших користувачів
+- [ ] Challenges / конкурси
+
+### Marketplace
+- [ ] Продаж промптів
+- [ ] Custom моделі (fine-tuned)
+- [ ] Templates та presets
+
+---
+
+## 📊 МЕТРИКИ УСПІХУ
+
+### KPIs
+| Метрика | Ціль (3 міс) | Ціль (12 міс) |
+|---------|--------------|---------------|
+| Користувачі | 10,000 | 100,000 |
+| MRR | $5,000 | $50,000 |
+| Генерацій/день | 50,000 | 500,000 |
+| Retention (D7) | 30% | 40% |
+| NPS | 40 | 60 |
 
 ---
 
@@ -255,36 +385,44 @@ ai-generator/
 │   │   │   ├── animate/        # Анімація фото
 │   │   │   ├── chat/           # AI чат
 │   │   │   ├── docs/           # Документація
+│   │   │   ├── gallery/        # Галерея робіт (NEW)
 │   │   │   ├── images/         # Генерація зображень
 │   │   │   ├── login/          # Вхід
 │   │   │   ├── pricing/        # Тарифи
 │   │   │   ├── register/       # Реєстрація
 │   │   │   ├── settings/       # Налаштування
 │   │   │   ├── video/          # Генерація відео
-│   │   │   ├── layout.tsx      # Головний layout
-│   │   │   └── page.tsx        # Головна сторінка
-│   │   ├── api/                # API routes
-│   │   │   ├── admin/          # Адмін API
-│   │   │   ├── animate/        # Анімація API
-│   │   │   ├── auth/           # NextAuth
-│   │   │   ├── chat/           # Чат API
-│   │   │   ├── images/         # Зображення API
-│   │   │   ├── video/          # Відео API
-│   │   │   └── webhooks/       # Платіжні webhooks
-│   │   └── globals.css         # Глобальні стилі
+│   │   │   ├── layout.tsx      
+│   │   │   └── page.tsx        
+│   │   ├── api/
+│   │   │   ├── v1/             # Public API (NEW)
+│   │   │   ├── admin/          
+│   │   │   ├── auth/           
+│   │   │   ├── chat/           
+│   │   │   ├── images/         
+│   │   │   ├── video/          
+│   │   │   └── webhooks/       
+│   │   └── globals.css         
 │   ├── components/
-│   │   ├── layout/             # Layout компоненти
-│   │   └── ui/                 # UI компоненти
-│   ├── i18n/                   # Інтернаціоналізація
-│   ├── lib/                    # Утиліти
-│   ├── auth.ts                 # NextAuth конфігурація
-│   └── middleware.ts           # Middleware
-├── messages/                   # Переклади
-│   ├── en.json
-│   └── uk.json
-├── prisma/                     # Prisma схема
-├── telegram-bot/               # Telegram бот
-├── public/                     # Статичні файли
+│   │   ├── chat/               # Чат компоненти (NEW)
+│   │   ├── gallery/            # Галерея (NEW)
+│   │   ├── layout/             
+│   │   └── ui/                 
+│   ├── hooks/                  # Custom hooks (NEW)
+│   ├── i18n/                   
+│   ├── lib/
+│   │   ├── ai/                 # AI провайдери (NEW)
+│   │   ├── payments/           # Платежі (NEW)
+│   │   └── ...
+│   ├── auth.ts                 
+│   └── middleware.ts           
+├── docs/                       # Документація моделей
+│   ├── models/                 # Гайди по моделях
+│   └── AI_MODELS.md            # Каталог
+├── messages/                   
+├── prisma/                     
+├── telegram-bot/               
+├── public/                     
 └── ...config files
 ```
 
@@ -306,7 +444,10 @@ GOOGLE_CLIENT_SECRET=
 GITHUB_ID=
 GITHUB_SECRET=
 
-# AI APIs
+# AI APIs (варіант 1: OpenRouter)
+OPENROUTER_API_KEY=
+
+# AI APIs (варіант 2: прямі)
 OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 GOOGLE_AI_API_KEY=
@@ -320,7 +461,34 @@ NOWPAYMENTS_IPN_SECRET=
 
 # Telegram
 TELEGRAM_BOT_TOKEN=
+
+# Analytics
+POSTHOG_KEY=
+SENTRY_DSN=
+
+# Redis (cache)
+REDIS_URL=
 ```
+
+---
+
+## 🗓️ TIMELINE
+
+| Фаза | Опис | Статус | Дедлайн |
+|------|------|--------|---------|
+| 1 | MVP | ✅ Done | 13.01.2026 |
+| 2 | Database | ✅ Done | 13.01.2026 |
+| 3 | Auth | ✅ Done | 14.01.2026 |
+| 3.5 | Docs | ✅ Done | 14.01.2026 |
+| 4 | AI Integration | 🔄 Next | 20.01.2026 |
+| 5 | Payments | ⏳ Pending | 25.01.2026 |
+| 6 | UX Improvements | ⏳ Pending | 01.02.2026 |
+| 7 | Optimization | ⏳ Pending | 10.02.2026 |
+| 8 | i18n | ⏳ Pending | 15.02.2026 |
+| 9 | Mobile | ⏳ Pending | 01.03.2026 |
+| 10 | API | ⏳ Pending | 15.03.2026 |
+| 11 | Enterprise | ⏳ Pending | 01.04.2026 |
+| 12 | Community | ⏳ Pending | 15.04.2026 |
 
 ---
 
@@ -331,6 +499,4 @@ TELEGRAM_BOT_TOKEN=
 
 ---
 
-*Останнє оновлення: 13 січня 2026*
-
-
+*Останнє оновлення: 14 січня 2026*

@@ -41,3 +41,9 @@ next-env.d.ts
 # Misc
 *.log
 *.tmp
+
+# Private/Internal documents (НЕ КОМІТИТИ!)
+docs/BUSINESS_MODEL.md
+docs/INTERNAL_*.md
+*.private.md
+*.secret.md

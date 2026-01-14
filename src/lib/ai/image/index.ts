@@ -1,0 +1,352 @@
+/**
+ * Image Generation - Роутер для генерації зображень
+ */
+
+import { 
+  ImageRequest, 
+  ImageResponse, 
+  GeneratedImage,
+  AIError 
+} from '../types';
+import { getImageModel, IMAGE_MODELS } from '../config';
+import { calculateImageCost } from '../pricing';
+
+// ============================================
+// ГЕНЕРАЦІЯ ЗОБРАЖЕНЬ
+// ============================================
+
+/**
+ * Генерація зображення
+ */
+export async function generateImage(request: ImageRequest): Promise<ImageResponse> {
+  const model = getImageModel(request.model);
+  
+  if (!model) {
+    throw new AIError(
+      `Image model ${request.model} not found`,
+      'MODEL_UNAVAILABLE'
+    );
+  }
+
+  if (!model.isAvailable) {
+    throw new AIError(
+      `Image model ${request.model} is currently unavailable`,
+      'MODEL_UNAVAILABLE'
+    );
+  }
+
+  // Роутинг до відповідного провайдера
+  switch (model.provider) {
+    case 'openai':
+      return generateOpenAIImage(request, model.id);
+    case 'replicate':
+      return generateReplicateImage(request, model.id);
+    case 'ideogram':
+      return generateIdeogramImage(request, model.id);
+    case 'google':
+      return generateGoogleImage(request, model.id);
+    case 'recraft':
+      return generateRecraftImage(request, model.id);
+    default:
+      throw new AIError(
+        `Provider ${model.provider} not supported for images`,
+        'PROVIDER_ERROR'
+      );
+  }
+}
+
+// ============================================
+// OPENAI (DALL-E / GPT Image)
+// ============================================
+
+async function generateOpenAIImage(
+  request: ImageRequest, 
+  modelId: string
+): Promise<ImageResponse> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    throw new AIError('OPENAI_API_KEY not configured', 'UNAUTHORIZED', 'openai');
+  }
+
+  const response = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: modelId === 'gpt-image-1' ? 'gpt-image-1' : 'dall-e-3',
+      prompt: request.prompt,
+      n: request.n || 1,
+      size: request.size || '1024x1024',
+      quality: request.quality || 'standard',
+      style: request.style,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new AIError(
+      error.error?.message || 'OpenAI image generation failed',
+      'PROVIDER_ERROR',
+      'openai',
+      response.status
+    );
+  }
+
+  const data = await response.json();
+  const usage = calculateImageCost(modelId, request.n || 1, request.quality === 'hd');
+
+  return {
+    id: crypto.randomUUID(),
+    images: data.data.map((item: any) => ({
+      url: item.url,
+      revisedPrompt: item.revised_prompt,
+    })),
+    model: modelId,
+    usage,
+  };
+}
+
+// ============================================
+// REPLICATE (FLUX, Midjourney, etc)
+// ============================================
+
+async function generateReplicateImage(
+  request: ImageRequest,
+  modelId: string
+): Promise<ImageResponse> {
+  const apiKey = process.env.REPLICATE_API_TOKEN;
+  if (!apiKey) {
+    throw new AIError('REPLICATE_API_TOKEN not configured', 'UNAUTHORIZED', 'replicate');
+  }
+
+  // Мапінг моделей
+  const modelVersions: Record<string, string> = {
+    'flux-max': 'black-forest-labs/flux-1.1-pro',
+    'flux-pro': 'black-forest-labs/flux-pro',
+    'flux-dev': 'black-forest-labs/flux-dev',
+    'midjourney': 'tstramer/midjourney-diffusion:latest',
+  };
+
+  const version = modelVersions[modelId];
+  if (!version) {
+    throw new AIError(`Model ${modelId} mapping not found`, 'MODEL_UNAVAILABLE', 'replicate');
+  }
+
+  // Створюємо prediction
+  const createResponse = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      version,
+      input: {
+        prompt: request.prompt,
+        negative_prompt: request.negativePrompt,
+        width: parseInt(request.size?.split('x')[0] || '1024'),
+        height: parseInt(request.size?.split('x')[1] || '1024'),
+        num_outputs: request.n || 1,
+      },
+    }),
+  });
+
+  if (!createResponse.ok) {
+    throw new AIError('Failed to create Replicate prediction', 'PROVIDER_ERROR', 'replicate');
+  }
+
+  const prediction = await createResponse.json();
+  
+  // Чекаємо на результат (polling)
+  const result = await pollReplicatePrediction(prediction.id, apiKey);
+  const usage = calculateImageCost(modelId, request.n || 1);
+
+  return {
+    id: prediction.id,
+    images: result.output.map((url: string) => ({ url })),
+    model: modelId,
+    usage,
+  };
+}
+
+async function pollReplicatePrediction(
+  id: string, 
+  apiKey: string, 
+  maxAttempts = 60
+): Promise<any> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const response = await fetch(`https://api.replicate.com/v1/predictions/${id}`, {
+      headers: { 'Authorization': `Token ${apiKey}` },
+    });
+
+    const data = await response.json();
+
+    if (data.status === 'succeeded') {
+      return data;
+    }
+    if (data.status === 'failed') {
+      throw new AIError(data.error || 'Prediction failed', 'PROVIDER_ERROR', 'replicate');
+    }
+
+    // Чекаємо 1 секунду
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  throw new AIError('Prediction timeout', 'TIMEOUT', 'replicate');
+}
+
+// ============================================
+// IDEOGRAM
+// ============================================
+
+async function generateIdeogramImage(
+  request: ImageRequest,
+  modelId: string
+): Promise<ImageResponse> {
+  const apiKey = process.env.IDEOGRAM_API_KEY;
+  if (!apiKey) {
+    throw new AIError('IDEOGRAM_API_KEY not configured', 'UNAUTHORIZED', 'ideogram');
+  }
+
+  const response = await fetch('https://api.ideogram.ai/generate', {
+    method: 'POST',
+    headers: {
+      'Api-Key': apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      image_request: {
+        prompt: request.prompt,
+        aspect_ratio: getAspectRatio(request.size),
+        model: modelId === 'ideogram-v3-turbo' ? 'V_2_TURBO' : 'V_2',
+        magic_prompt_option: 'AUTO',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new AIError('Ideogram generation failed', 'PROVIDER_ERROR', 'ideogram');
+  }
+
+  const data = await response.json();
+  const usage = calculateImageCost(modelId, 1);
+
+  return {
+    id: crypto.randomUUID(),
+    images: data.data.map((item: any) => ({
+      url: item.url,
+      revisedPrompt: item.prompt,
+    })),
+    model: modelId,
+    usage,
+  };
+}
+
+// ============================================
+// GOOGLE IMAGEN
+// ============================================
+
+async function generateGoogleImage(
+  request: ImageRequest,
+  modelId: string
+): Promise<ImageResponse> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  if (!apiKey) {
+    throw new AIError('GOOGLE_AI_API_KEY not configured', 'UNAUTHORIZED', 'google');
+  }
+
+  // TODO: Implement Google Imagen API when available
+  throw new AIError('Google Imagen not yet implemented', 'MODEL_UNAVAILABLE', 'google');
+}
+
+// ============================================
+// RECRAFT
+// ============================================
+
+async function generateRecraftImage(
+  request: ImageRequest,
+  modelId: string
+): Promise<ImageResponse> {
+  const apiKey = process.env.RECRAFT_API_KEY;
+  if (!apiKey) {
+    throw new AIError('RECRAFT_API_KEY not configured', 'UNAUTHORIZED', 'recraft');
+  }
+
+  const response = await fetch('https://external.api.recraft.ai/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt: request.prompt,
+      style: request.style || 'realistic_image',
+      size: request.size || '1024x1024',
+      n: request.n || 1,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new AIError('Recraft generation failed', 'PROVIDER_ERROR', 'recraft');
+  }
+
+  const data = await response.json();
+  const usage = calculateImageCost(modelId, request.n || 1);
+
+  return {
+    id: crypto.randomUUID(),
+    images: data.data.map((item: any) => ({ url: item.url })),
+    model: modelId,
+    usage,
+  };
+}
+
+// ============================================
+// ХЕЛПЕРИ
+// ============================================
+
+function getAspectRatio(size?: string): string {
+  if (!size) return 'ASPECT_1_1';
+  
+  const [w, h] = size.split('x').map(Number);
+  const ratio = w / h;
+  
+  if (ratio > 1.5) return 'ASPECT_16_9';
+  if (ratio > 1.2) return 'ASPECT_4_3';
+  if (ratio < 0.7) return 'ASPECT_9_16';
+  if (ratio < 0.8) return 'ASPECT_3_4';
+  return 'ASPECT_1_1';
+}
+
+/**
+ * Отримати доступні моделі зображень
+ */
+export function getAvailableImageModels() {
+  return IMAGE_MODELS.filter(m => m.isAvailable);
+}
+
+/**
+ * Отримати рекомендовану модель
+ */
+export function getRecommendedImageModel(
+  task: 'photo' | 'art' | 'text' | 'logo' | 'budget'
+): string {
+  switch (task) {
+    case 'photo':
+      return 'flux-max';
+    case 'art':
+      return 'midjourney';
+    case 'text':
+      return 'ideogram-v3';
+    case 'logo':
+      return 'recraft-v3';
+    case 'budget':
+      return 'flux-dev';
+    default:
+      return 'flux-pro';
+  }
+}
+
+export { IMAGE_MODELS } from '../config';

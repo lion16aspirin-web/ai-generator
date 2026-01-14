@@ -1,112 +1,128 @@
+/**
+ * Chat API - Чат з AI моделями
+ * POST /api/chat
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
-import { getApiKey } from '@/lib/api-keys';
+import { auth } from '@/auth';
+import { generateText, generateTextStream } from '@/lib/ai/text';
+import { createSSEResponse } from '@/lib/ai/text/stream';
+import { calculateTextCost, estimateTextCost } from '@/lib/ai/pricing';
+import { deductTokens, getUserTokens } from '@/lib/utils/tokens';
+import { ChatMessage, AIError } from '@/lib/ai/types';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
+
+interface ChatRequestBody {
+  model: string;
+  messages: ChatMessage[];
+  stream?: boolean;
+  temperature?: number;
+  maxTokens?: number;
+  systemPrompt?: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, model } = await request.json();
-
-    if (!message) {
-      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    // Авторизація
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized', message: 'Потрібна авторизація' },
+        { status: 401 }
+      );
     }
 
-    // Get API key for the selected model
-    let apiKey: string | null = null;
-    let provider: 'openai' | 'anthropic' | 'google' = 'openai';
+    const userId = session.user.id;
 
-    if (model.startsWith('gpt') || model === 'gpt5nano' || model === 'gpt41' || model === 'gpt5') {
-      apiKey = await getApiKey('openai');
-      provider = 'openai';
-    } else if (model.startsWith('claude')) {
-      apiKey = await getApiKey('anthropic');
-      provider = 'anthropic';
-    } else if (model.startsWith('gemini')) {
-      apiKey = await getApiKey('google');
-      provider = 'google';
+    // Парсинг body
+    const body: ChatRequestBody = await request.json();
+    const { model, messages, stream = true, temperature, maxTokens, systemPrompt } = body;
+
+    // Валідація
+    if (!model) {
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Модель не вказана' },
+        { status: 400 }
+      );
     }
 
-    if (!apiKey) {
-      return NextResponse.json({ 
-        response: 'API ключ для цієї моделі не налаштовано. Зверніться до адміністратора.',
-        error: 'API key not configured'
+    if (!messages || messages.length === 0) {
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Повідомлення відсутні' },
+        { status: 400 }
+      );
+    }
+
+    // Оцінка вартості
+    const lastMessage = messages[messages.length - 1];
+    const inputLength = messages.reduce((acc, m) => acc + m.content.length, 0);
+    const estimatedCost = estimateTextCost(model, inputLength);
+
+    // Перевірка балансу
+    const userTokens = await getUserTokens(userId);
+    if (userTokens.available < estimatedCost.platformTokens) {
+      return NextResponse.json(
+        { 
+          error: 'Insufficient Tokens', 
+          message: 'Недостатньо токенів',
+          required: estimatedCost.platformTokens,
+          available: userTokens.available,
+        },
+        { status: 402 }
+      );
+    }
+
+    // Streaming response
+    if (stream) {
+      const generator = generateTextStream({
+        model,
+        messages,
+        stream: true,
+        temperature,
+        maxTokens,
+        systemPrompt,
       });
+
+      // Списуємо токени (оцінка)
+      await deductTokens(userId, estimatedCost.platformTokens, `chat:${model}`);
+
+      return createSSEResponse(generator);
     }
 
-    // Model mapping
-    const modelMap: Record<string, string> = {
-      'gpt5nano': 'gpt-4o-mini',
-      'gpt41': 'gpt-4-turbo',
-      'gpt5': 'gpt-4o',
-      'claude3opus': 'claude-3-opus-20240229',
-      'claude3sonnet': 'claude-3-sonnet-20240229',
-      'gemini15pro': 'gemini-1.5-pro',
-      'llama3': 'llama-3-70b-instruct',
-    };
+    // Regular response
+    const response = await generateText({
+      model,
+      messages,
+      stream: false,
+      temperature,
+      maxTokens,
+      systemPrompt,
+    });
 
-    const actualModel = modelMap[model] || model;
+    // Списуємо реальну кількість токенів
+    await deductTokens(userId, response.usage.platformTokens, `chat:${model}`);
 
-    let response: string;
+    return NextResponse.json(response);
 
-    switch (provider) {
-      case 'openai':
-        const openaiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: actualModel,
-            messages: [{ role: 'user', content: message }],
-            max_tokens: 2048,
-          }),
-        });
-        const openaiData = await openaiRes.json();
-        response = openaiData.choices?.[0]?.message?.content || 'Error generating response';
-        break;
-
-      case 'anthropic':
-        const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'x-api-key': apiKey,
-            'anthropic-version': '2023-06-01',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: actualModel,
-            max_tokens: 2048,
-            messages: [{ role: 'user', content: message }],
-          }),
-        });
-        const anthropicData = await anthropicRes.json();
-        response = anthropicData.content?.[0]?.text || 'Error generating response';
-        break;
-
-      case 'google':
-        const googleRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1/models/${actualModel}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: message }] }],
-            }),
-          }
-        );
-        const googleData = await googleRes.json();
-        response = googleData.candidates?.[0]?.content?.parts?.[0]?.text || 'Error generating response';
-        break;
-
-      default:
-        response = 'Unknown provider';
-    }
-
-    return NextResponse.json({ response });
   } catch (error) {
     console.error('Chat API error:', error);
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      response: 'Сталася помилка. Спробуйте пізніше.'
-    }, { status: 500 });
+
+    if (error instanceof AIError) {
+      return NextResponse.json(
+        { 
+          error: error.code, 
+          message: error.message,
+          provider: error.provider,
+        },
+        { status: error.statusCode || 500 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: 'Internal Error', message: 'Внутрішня помилка сервера' },
+      { status: 500 }
+    );
   }
 }
