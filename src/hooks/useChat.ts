@@ -4,7 +4,7 @@
  * useChat - Хук для чату з AI
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage, ChatResponse, StreamChunk } from '@/lib/ai/types';
 import { parseSSEStream } from '@/lib/ai/text/stream';
 import { useTokens } from './useTokens';
@@ -30,7 +30,7 @@ interface UseChatReturn extends ChatState {
   stop: () => void;
 }
 
-export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
+export function useChat(initialModel: string = 'gpt-5.1', chatId?: string): UseChatReturn {
   const [state, setState] = useState<ChatState>({
     messages: [],
     isLoading: false,
@@ -40,7 +40,38 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const currentModelRef = useRef<string>(initialModel); // Ref для актуальної моделі
+  const messagesRef = useRef<ChatMessage[]>([]); // Ref для актуальних повідомлень
   const { deduct, hasEnough } = useTokens();
+
+  // Завантаження історії чату
+  useEffect(() => {
+    if (chatId) {
+      loadChatHistory(chatId);
+    }
+  }, [chatId]);
+
+  // Завантаження історії чату
+  const loadChatHistory = async (chatId: string) => {
+    try {
+      const response = await fetch(`/api/chat/history/${chatId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setState(prev => {
+          const loadedMessages = data.messages || [];
+          messagesRef.current = loadedMessages; // Оновлюємо ref
+          return {
+            ...prev,
+            messages: loadedMessages,
+            currentModel: data.model || prev.currentModel,
+          };
+        });
+        currentModelRef.current = data.model || currentModelRef.current;
+      }
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+    }
+  };
 
   // Відправка повідомлення
   const sendMessage = useCallback(async (
@@ -48,6 +79,9 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
     options: SendMessageOptions = {}
   ) => {
     const { stream = true, images } = options;
+
+    // Використовуємо актуальну модель з ref
+    const modelToUse = currentModelRef.current;
 
     // Створюємо повідомлення користувача
     const userMessage: ChatMessage = {
@@ -59,13 +93,17 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
     };
 
     // Додаємо до стейту
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      isLoading: true,
-      isStreaming: stream,
-      error: null,
-    }));
+    setState(prev => {
+      const newMessages = [...prev.messages, userMessage];
+      messagesRef.current = newMessages; // Оновлюємо ref
+      return {
+        ...prev,
+        messages: newMessages,
+        isLoading: true,
+        isStreaming: stream,
+        error: null,
+      };
+    });
 
     // Створюємо AbortController
     abortControllerRef.current = new AbortController();
@@ -75,9 +113,10 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: state.currentModel,
-          messages: [...state.messages, userMessage],
+          model: modelToUse, // Використовуємо актуальну модель
+          messages: messagesRef.current, // Використовуємо актуальні повідомлення з ref
           stream,
+          chatId, // Передаємо chatId для збереження
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -101,12 +140,28 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
           createdAt: new Date(),
         };
 
-        setState(prev => ({
-          ...prev,
-          messages: [...prev.messages, assistantMessage],
-          isLoading: false,
-          isStreaming: false,
-        }));
+        setState(prev => {
+          const newMessages = [...prev.messages, assistantMessage];
+          messagesRef.current = newMessages; // Оновлюємо ref
+          return {
+            ...prev,
+            messages: newMessages,
+            isLoading: false,
+            isStreaming: false,
+          };
+        });
+      }
+
+      // Оновлюємо chatId якщо отримали його з відповіді
+      if (response.ok && !chatId) {
+        try {
+          const data = await response.clone().json();
+          if (data.chatId) {
+            // Можна зберегти chatId для подальшого використання
+          }
+        } catch {
+          // Ігноруємо помилку парсингу для streaming
+        }
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
@@ -126,22 +181,26 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
         error: error instanceof Error ? error.message : 'Unknown error',
       }));
     }
-  }, [state.currentModel, state.messages]);
+  }, [chatId]); // Використовуємо функціональне оновлення для messages
 
   // Обробка streaming відповіді
   const handleStreamResponse = async (response: Response) => {
     // Створюємо пусте повідомлення асистента
     const assistantId = crypto.randomUUID();
     
-    setState(prev => ({
-      ...prev,
-      messages: [...prev.messages, {
+    setState(prev => {
+      const newMessages = [...prev.messages, {
         id: assistantId,
-        role: 'assistant',
+        role: 'assistant' as const,
         content: '',
         createdAt: new Date(),
-      }],
-    }));
+      }];
+      messagesRef.current = newMessages; // Оновлюємо ref
+      return {
+        ...prev,
+        messages: newMessages,
+      };
+    });
 
     let fullContent = '';
 
@@ -151,14 +210,18 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
       fullContent += chunk.content;
 
       // Оновлюємо повідомлення
-      setState(prev => ({
-        ...prev,
-        messages: prev.messages.map(msg =>
+      setState(prev => {
+        const updatedMessages = prev.messages.map(msg =>
           msg.id === assistantId
             ? { ...msg, content: fullContent }
             : msg
-        ),
-      }));
+        );
+        messagesRef.current = updatedMessages; // Оновлюємо ref
+        return {
+          ...prev,
+          messages: updatedMessages,
+        };
+      });
     }
 
     setState(prev => ({
@@ -171,10 +234,20 @@ export function useChat(initialModel: string = 'gpt-5.1'): UseChatReturn {
   // Зміна моделі
   const setModel = useCallback((modelId: string) => {
     setState(prev => ({ ...prev, currentModel: modelId }));
-  }, []);
+    currentModelRef.current = modelId; // Оновлюємо ref
+    // Оновлюємо модель в чаті на сервері
+    if (chatId) {
+      fetch(`/api/chat/${chatId}/model`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: modelId }),
+      }).catch(console.error);
+    }
+  }, [chatId]);
 
   // Очищення повідомлень
   const clearMessages = useCallback(() => {
+    messagesRef.current = []; // Очищаємо ref
     setState(prev => ({ ...prev, messages: [], error: null }));
   }, []);
 

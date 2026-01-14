@@ -10,6 +10,7 @@ import { createSSEResponse } from '@/lib/ai/text/stream';
 import { calculateTextCost, estimateTextCost } from '@/lib/ai/pricing';
 import { deductTokens, getUserTokens } from '@/lib/utils/tokens';
 import { ChatMessage, AIError } from '@/lib/ai/types';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -21,6 +22,7 @@ interface ChatRequestBody {
   temperature?: number;
   maxTokens?: number;
   systemPrompt?: string;
+  chatId?: string; // ID існуючого чату або undefined для нового
 }
 
 export async function POST(request: NextRequest) {
@@ -38,7 +40,34 @@ export async function POST(request: NextRequest) {
 
     // Парсинг body
     const body: ChatRequestBody = await request.json();
-    const { model, messages, stream = true, temperature, maxTokens, systemPrompt } = body;
+    const { model, messages, stream = true, temperature, maxTokens, systemPrompt, chatId } = body;
+
+    // Отримуємо або створюємо чат
+    let chat = chatId 
+      ? await prisma.chat.findFirst({
+          where: { id: chatId, userId },
+        })
+      : null;
+
+    if (!chat) {
+      // Створюємо новий чат
+      const firstMessage = messages.find(m => m.role === 'user');
+      chat = await prisma.chat.create({
+        data: {
+          userId,
+          model,
+          title: firstMessage?.content.substring(0, 50) || 'Новий чат',
+        },
+      });
+    } else {
+      // Оновлюємо модель чату якщо змінилася
+      if (chat.model !== model) {
+        await prisma.chat.update({
+          where: { id: chat.id },
+          data: { model },
+        });
+      }
+    }
 
     // Валідація
     if (!model) {
@@ -74,6 +103,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Зберігаємо повідомлення користувача (lastMessage вже визначено вище)
+    if (lastMessage.role === 'user') {
+      await prisma.message.create({
+        data: {
+          chatId: chat.id,
+          role: 'user',
+          content: lastMessage.content,
+          images: lastMessage.images ? JSON.stringify(lastMessage.images) : null,
+        },
+      });
+    }
+
     // Streaming response
     if (stream) {
       const generator = generateTextStream({
@@ -88,7 +129,8 @@ export async function POST(request: NextRequest) {
       // Списуємо токени (оцінка)
       await deductTokens(userId, estimatedCost.platformTokens, `chat:${model}`);
 
-      return createSSEResponse(generator);
+      // Обгортаємо generator для збереження відповіді
+      return createSSEResponse(saveStreamingResponse(generator, chat.id, model, estimatedCost.platformTokens));
     }
 
     // Regular response
@@ -101,10 +143,21 @@ export async function POST(request: NextRequest) {
       systemPrompt,
     });
 
+    // Зберігаємо відповідь асистента
+    await prisma.message.create({
+      data: {
+        chatId: chat.id,
+        role: 'assistant',
+        content: response.content,
+        model,
+        tokens: response.usage.totalTokens,
+      },
+    });
+
     // Списуємо реальну кількість токенів
     await deductTokens(userId, response.usage.platformTokens, `chat:${model}`);
 
-    return NextResponse.json(response);
+    return NextResponse.json({ ...response, chatId: chat.id });
 
   } catch (error) {
     console.error('Chat API error:', error);
@@ -124,5 +177,42 @@ export async function POST(request: NextRequest) {
       { error: 'Internal Error', message: 'Внутрішня помилка сервера' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Збереження streaming відповіді
+ */
+async function* saveStreamingResponse(
+  generator: AsyncGenerator<{ content: string; done: boolean }>,
+  chatId: string,
+  model: string,
+  estimatedTokens: number
+): AsyncGenerator<{ content: string; done: boolean }> {
+  let fullContent = '';
+  
+  for await (const chunk of generator) {
+    if (!chunk.done) {
+      fullContent += chunk.content;
+    }
+    yield chunk;
+  }
+
+  // Зберігаємо повну відповідь після завершення
+  if (fullContent) {
+    try {
+      await prisma.message.create({
+        data: {
+          chatId,
+          role: 'assistant',
+          content: fullContent,
+          model,
+          tokens: estimatedTokens,
+        },
+      });
+    } catch (error) {
+      // Не блокуємо відповідь якщо збереження не вдалося
+      console.error('Failed to save streaming message:', error);
+    }
   }
 }

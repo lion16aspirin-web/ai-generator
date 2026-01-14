@@ -50,6 +50,7 @@ model User {
   sessions      Session[]
   apiKeys       ApiKey[]
   tokenHistory  Token[]
+  chats         Chat[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -123,4 +124,33 @@ model Subscription {
 
   @@index([userId])
   @@index([status])
+}
+
+model Chat {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?  // Автоматично генерується з першого повідомлення
+  model     String   // Поточна модель чату
+  messages  Message[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  role      String   // user, assistant, system
+  content   String   @db.Text
+  model     String?  // Модель, яка згенерувала відповідь (для assistant)
+  images    Json?    // Масив URL/base64 зображень
+  tokens    Int?     // Використані токени
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([chatId])
+  @@index([createdAt])
 }
