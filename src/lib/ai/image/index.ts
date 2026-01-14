@@ -321,13 +321,6 @@ function getAspectRatio(size?: string): string {
 }
 
 /**
- * Отримати доступні моделі зображень
- */
-export function getAvailableImageModels() {
-  return IMAGE_MODELS.filter(m => m.isAvailable);
-}
-
-/**
  * Отримати рекомендовану модель
  */
 export function getRecommendedImageModel(

@@ -339,11 +339,4 @@ function parseProgress(logs: string): number {
   return match ? parseInt(match[1]) : 0;
 }
 
-/**
- * Отримати доступні моделі відео
- */
-export function getAvailableVideoModels() {
-  return VIDEO_MODELS.filter(m => m.isAvailable);
-}
-
 export { VIDEO_MODELS } from '../config';
