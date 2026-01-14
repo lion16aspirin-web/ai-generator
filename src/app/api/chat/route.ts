@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
           chatId: chat.id,
           role: 'user',
           content: lastMessage.content,
-          images: lastMessage.images ? JSON.stringify(lastMessage.images) : null,
+          images: lastMessage.images ? JSON.stringify(lastMessage.images) : undefined,
         },
       });
     }
