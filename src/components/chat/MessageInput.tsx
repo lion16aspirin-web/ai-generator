@@ -4,7 +4,7 @@
  * MessageInput - Мінімалістичне поле вводу
  */
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef } from 'react';
 
 interface MessageInputProps {
   onSend: (message: string, images?: string[]) => void;
@@ -12,14 +12,15 @@ interface MessageInputProps {
   placeholder?: string;
 }
 
-export function MessageInput({
+export const MessageInput = forwardRef<HTMLTextAreaElement, MessageInputProps>(({
   onSend,
   disabled = false,
   placeholder = 'Message...',
-}: MessageInputProps) {
+}, ref) => {
   const [message, setMessage] = useState('');
   const [images, setImages] = useState<string[]>([]);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const internalRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = (ref || internalRef) as React.RefObject<HTMLTextAreaElement>;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -151,6 +152,8 @@ export function MessageInput({
       </div>
     </div>
   );
-}
+});
+
+MessageInput.displayName = 'MessageInput';
 
 export default MessageInput;

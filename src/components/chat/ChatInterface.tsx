@@ -10,6 +10,7 @@ import { useTokens, formatTokens } from '@/hooks/useTokens';
 import { ModelSelector } from './ModelSelector';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { useChatShortcuts } from './useChatShortcuts';
 
 interface ChatInterfaceProps {
   initialModel?: string;
@@ -37,10 +38,23 @@ export function ChatInterface({
   } = useChat(initialModel, chatId || undefined);
 
   const { available, loading: tokensLoading } = useTokens();
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   
   const [notification, setNotification] = useState<string | null>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousModelRef = useRef<string>(currentModel);
+
+  // Гарячі клавіші
+  useChatShortcuts({
+    onFocusInput: () => {
+      inputRef.current?.focus();
+    },
+    onClear: () => {
+      if (messages.length > 0 && !isLoading) {
+        clearMessages();
+      }
+    },
+  });
 
   const showNotification = useCallback((text: string) => {
     setNotification(text);
@@ -134,6 +148,7 @@ export function ChatInterface({
 
       {/* Input */}
       <MessageInput
+        ref={inputRef}
         onSend={(content, images) => sendMessage(content, { images })}
         disabled={isLoading || isStreaming || available < 10}
         placeholder={available < 10 ? 'No tokens...' : 'Message...'}
