@@ -38,7 +38,7 @@ export function ChatInterface({
   const { available, loading: tokensLoading } = useTokens();
   
   const [notification, setNotification] = useState<string | null>(null);
-  const notificationTimeoutRef = useRef<NodeJS.Timeout>();
+  const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousModelRef = useRef<string>(currentModel);
 
   const showNotification = useCallback((text: string) => {
