@@ -12,12 +12,16 @@ interface ChatSidebarProps {
   selectedChatId: string | null;
   onSelectChat: (chatId: string | null) => void;
   onNewChat: () => void;
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
 }
 
 export function ChatSidebar({
   selectedChatId,
   onSelectChat,
   onNewChat,
+  isCollapsed = false,
+  onToggleCollapse,
 }: ChatSidebarProps) {
   const {
     filteredChats,
@@ -29,13 +33,52 @@ export function ChatSidebar({
     exportChat,
   } = useChats();
 
+  // Collapsed version
+  if (isCollapsed) {
+    return (
+      <div className="w-10 bg-neutral-900 border-r border-neutral-800 flex flex-col items-center py-2 gap-2">
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 rounded hover:bg-neutral-800 text-neutral-500 hover:text-neutral-300"
+            title="Expand"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
+        <button
+          onClick={onNewChat}
+          className="p-1.5 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-neutral-200"
+          title="New chat"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
+
+  // Expanded version
   return (
     <div className="w-56 bg-neutral-900 border-r border-neutral-800 flex flex-col h-full">
       {/* Header */}
-      <div className="p-2 border-b border-neutral-800">
+      <div className="p-2 border-b border-neutral-800 flex items-center gap-1.5">
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className="p-1 rounded hover:bg-neutral-800 text-neutral-500 hover:text-neutral-300"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
         <button
           onClick={onNewChat}
-          className="w-full flex items-center justify-center gap-1.5 px-2 py-1.5 
+          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 
             bg-neutral-800 hover:bg-neutral-750 rounded text-neutral-400 
             hover:text-neutral-200 text-xs transition-colors border border-neutral-700"
         >

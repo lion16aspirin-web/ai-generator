@@ -12,6 +12,7 @@ interface ChatPageProps {
 export default function ChatPage({ params }: ChatPageProps) {
   const { locale } = React.use(params);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [chatKey, setChatKey] = useState(0);
 
   const handleNewChat = useCallback(() => {
@@ -35,6 +36,8 @@ export default function ChatPage({ params }: ChatPageProps) {
           selectedChatId={selectedChatId}
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
         <div className="flex-1 min-w-0">
