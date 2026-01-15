@@ -4,7 +4,7 @@
  * ChatInterface - Головний компонент чату
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { useTokens, formatTokens } from '@/hooks/useTokens';
 import { ModelSelector } from './ModelSelector';
@@ -36,6 +36,37 @@ export function ChatInterface({
   } = useChat(initialModel, chatId || undefined);
 
   const { available, loading: tokensLoading } = useTokens();
+  
+  // Сповіщення про зміну моделі
+  const [modelNotification, setModelNotification] = useState<string | null>(null);
+  const notificationTimeoutRef = useRef<NodeJS.Timeout>();
+  const previousModelRef = useRef<string>(currentModel);
+
+  // Обробник зміни моделі з візуальним фідбеком
+  const handleModelChange = useCallback((modelId: string) => {
+    if (modelId === previousModelRef.current) return;
+    
+    setModel(modelId);
+    previousModelRef.current = modelId;
+    
+    // Показуємо сповіщення
+    setModelNotification(`✓ Модель змінено`);
+    
+    // Очищаємо попередній таймаут
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+    }
+    
+    // Ховаємо сповіщення через 2 секунди
+    notificationTimeoutRef.current = setTimeout(() => {
+      setModelNotification(null);
+    }, 2000);
+  }, [setModel]);
+
+  // Синхронізуємо ref при зміні моделі ззовні (напр. при завантаженні чату)
+  useEffect(() => {
+    previousModelRef.current = currentModel;
+  }, [currentModel]);
 
   // Сповіщаємо батьківський компонент про створення нового чату
   useEffect(() => {
@@ -46,12 +77,21 @@ export function ChatInterface({
 
   return (
     <div className="flex flex-col h-full bg-zinc-900">
+      {/* Model Change Notification */}
+      {modelNotification && (
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50
+          px-4 py-2 bg-emerald-600 text-white rounded-lg shadow-lg
+          animate-fadeIn text-sm font-medium">
+          {modelNotification}
+        </div>
+      )}
+      
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
         <div className="flex items-center gap-4">
           <ModelSelector
             selectedModel={currentModel}
-            onModelChange={setModel}
+            onModelChange={handleModelChange}
             disabled={isLoading || isStreaming}
           />
           
