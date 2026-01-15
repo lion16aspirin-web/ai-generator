@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * ChatInterface - Головний компонент чату
+ * ChatInterface - Мінімалістичний інтерфейс чату
  */
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -37,38 +37,31 @@ export function ChatInterface({
 
   const { available, loading: tokensLoading } = useTokens();
   
-  // Сповіщення про зміну моделі
-  const [modelNotification, setModelNotification] = useState<string | null>(null);
+  const [notification, setNotification] = useState<string | null>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout>();
   const previousModelRef = useRef<string>(currentModel);
 
-  // Обробник зміни моделі з візуальним фідбеком
-  const handleModelChange = useCallback((modelId: string) => {
-    if (modelId === previousModelRef.current) return;
-    
-    setModel(modelId);
-    previousModelRef.current = modelId;
-    
-    // Показуємо сповіщення
-    setModelNotification(`✓ Модель змінено`);
-    
-    // Очищаємо попередній таймаут
+  const showNotification = useCallback((text: string) => {
+    setNotification(text);
     if (notificationTimeoutRef.current) {
       clearTimeout(notificationTimeoutRef.current);
     }
-    
-    // Ховаємо сповіщення через 2 секунди
     notificationTimeoutRef.current = setTimeout(() => {
-      setModelNotification(null);
-    }, 2000);
-  }, [setModel]);
+      setNotification(null);
+    }, 1500);
+  }, []);
 
-  // Синхронізуємо ref при зміні моделі ззовні (напр. при завантаженні чату)
+  const handleModelChange = useCallback((modelId: string) => {
+    if (modelId === previousModelRef.current) return;
+    setModel(modelId);
+    previousModelRef.current = modelId;
+    showNotification('Model changed');
+  }, [setModel, showNotification]);
+
   useEffect(() => {
     previousModelRef.current = currentModel;
   }, [currentModel]);
 
-  // Сповіщаємо батьківський компонент про створення нового чату
   useEffect(() => {
     if (currentChatId && !chatId && onChatCreated) {
       onChatCreated(currentChatId);
@@ -76,19 +69,19 @@ export function ChatInterface({
   }, [currentChatId, chatId, onChatCreated]);
 
   return (
-    <div className="flex flex-col h-full bg-zinc-900">
-      {/* Model Change Notification */}
-      {modelNotification && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 z-50
-          px-4 py-2 bg-emerald-600 text-white rounded-lg shadow-lg
-          animate-fadeIn text-sm font-medium">
-          {modelNotification}
+    <div className="flex flex-col h-full bg-neutral-900">
+      {/* Notification */}
+      {notification && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50
+          px-3 py-1.5 bg-neutral-800 text-neutral-300 rounded text-xs
+          border border-neutral-700 animate-fadeIn">
+          {notification}
         </div>
       )}
       
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between px-4 py-2 border-b border-neutral-800">
+        <div className="flex items-center gap-3">
           <ModelSelector
             selectedModel={currentModel}
             onModelChange={handleModelChange}
@@ -98,43 +91,36 @@ export function ChatInterface({
           {(isLoading || isStreaming) && (
             <button
               onClick={stop}
-              className="px-3 py-1.5 text-sm rounded-lg bg-red-600 hover:bg-red-500 
-                text-white transition-colors"
+              className="px-2 py-1 text-xs rounded bg-neutral-800 hover:bg-neutral-700 
+                text-neutral-400 hover:text-neutral-200 transition-colors border border-neutral-700"
             >
-              ⏹ Зупинити
+              Stop
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Token counter */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-zinc-400">Токени:</span>
-            <span className={`font-medium ${
-              available < 100 ? 'text-red-400' : 'text-emerald-400'
-            }`}>
-              {tokensLoading ? '...' : formatTokens(available)}
-            </span>
-          </div>
+        <div className="flex items-center gap-3">
+          {/* Tokens */}
+          <span className="text-xs text-neutral-500">
+            {tokensLoading ? '...' : formatTokens(available)}
+          </span>
 
-          {/* Clear button */}
+          {/* Clear */}
           {messages.length > 0 && !isLoading && (
             <button
               onClick={clearMessages}
-              className="px-3 py-1.5 text-sm rounded-lg 
-                bg-zinc-800 hover:bg-zinc-700 text-zinc-300 
-                transition-colors"
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
             >
-              🗑 Очистити
+              Clear
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* Error message */}
+      {/* Error */}
       {error && (
-        <div className="mx-4 mt-4 p-3 rounded-lg bg-red-900/50 border border-red-700 text-red-200">
-          <span className="font-medium">Помилка:</span> {error}
+        <div className="mx-4 mt-3 px-3 py-2 rounded text-xs bg-red-900/20 border border-red-900/50 text-red-400">
+          {error}
         </div>
       )}
 
@@ -148,11 +134,7 @@ export function ChatInterface({
       <MessageInput
         onSend={(content, images) => sendMessage(content, { images })}
         disabled={isLoading || isStreaming || available < 10}
-        placeholder={
-          available < 10 
-            ? 'Недостатньо токенів...' 
-            : 'Напишіть повідомлення...'
-        }
+        placeholder={available < 10 ? 'No tokens...' : 'Message...'}
       />
     </div>
   );

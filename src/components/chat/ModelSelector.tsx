@@ -1,13 +1,12 @@
 'use client';
 
 /**
- * ModelSelector - Компонент вибору AI моделі
+ * ModelSelector - Мінімалістичний селектор моделі
  */
 
 import React, { useState } from 'react';
-import { getModelsByProvider, ModelGroup } from '@/lib/ai/text/models';
+import { getModelsByProvider } from '@/lib/ai/text/models';
 import { TextModel } from '@/lib/ai/types';
-import { formatTokens } from '@/hooks/useTokens';
 
 interface ModelSelectorProps {
   selectedModel: string;
@@ -29,43 +28,45 @@ export function ModelSelector({
 
   return (
     <div className="relative">
-      {/* Trigger Button */}
+      {/* Trigger */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         disabled={disabled}
         className={`
-          flex items-center gap-2 px-3 py-2 rounded-lg
-          bg-zinc-800 hover:bg-zinc-700 border border-zinc-700
-          text-sm font-medium transition-colors
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          flex items-center gap-2 px-2.5 py-1.5 rounded
+          bg-neutral-800 hover:bg-neutral-750 border border-neutral-700
+          text-xs transition-colors
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-neutral-600'}
         `}
       >
-        <ModelIcon provider={currentModel?.provider || 'openai'} />
-        <span>{currentModel?.name || 'Виберіть модель'}</span>
-        <ChevronIcon isOpen={isOpen} />
+        <span className="text-neutral-400">{currentModel?.name || 'Select'}</span>
+        <svg 
+          className={`w-3 h-3 text-neutral-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
 
       {/* Dropdown */}
       {isOpen && !disabled && (
         <>
-          {/* Backdrop */}
           <div 
             className="fixed inset-0 z-10" 
             onClick={() => setIsOpen(false)} 
           />
           
-          {/* Menu */}
-          <div className="absolute top-full left-0 mt-2 w-80 max-h-96 overflow-y-auto
-            bg-zinc-900 border border-zinc-700 rounded-xl shadow-xl z-20">
+          <div className="absolute top-full left-0 mt-1 w-64 max-h-80 overflow-y-auto
+            bg-neutral-900 border border-neutral-800 rounded shadow-xl z-20">
             {modelGroups.map(group => (
               <div key={group.provider}>
-                {/* Provider Header */}
-                <div className="px-3 py-2 text-xs font-semibold text-zinc-400 
-                  uppercase tracking-wider bg-zinc-800/50 sticky top-0">
+                <div className="px-3 py-1.5 text-[10px] text-neutral-500 uppercase tracking-wider 
+                  bg-neutral-850 sticky top-0 border-b border-neutral-800">
                   {group.name}
                 </div>
                 
-                {/* Models */}
                 {group.models.map(model => (
                   <ModelOption
                     key={model.id}
@@ -86,10 +87,6 @@ export function ModelSelector({
   );
 }
 
-// ============================================
-// СУБКОМПОНЕНТИ
-// ============================================
-
 interface ModelOptionProps {
   model: TextModel;
   isSelected: boolean;
@@ -103,90 +100,22 @@ function ModelOption({ model, isSelected, onClick }: ModelOptionProps) {
     <button
       onClick={onClick}
       className={`
-        w-full px-3 py-3 flex items-start gap-3 text-left
-        hover:bg-zinc-800 transition-colors
-        ${isSelected ? 'bg-zinc-800' : ''}
+        w-full px-3 py-2 flex items-center justify-between text-left
+        hover:bg-neutral-800 transition-colors text-xs
+        ${isSelected ? 'bg-neutral-800' : ''}
       `}
     >
-      <ModelIcon provider={model.provider} />
-      
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium text-white">{model.name}</span>
-          {isSelected && (
-            <span className="text-emerald-500">✓</span>
-          )}
-        </div>
-        
-        <p className="text-xs text-zinc-400 mt-0.5 line-clamp-1">
-          {model.description}
-        </p>
-        
-        <div className="flex items-center gap-2 mt-1">
-          {/* Price */}
-          <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-700 text-zinc-300">
-            ${avgPrice}/1M
-          </span>
-          
-          {/* Capabilities */}
-          {model.capabilities.includes('vision') && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-purple-900/50 text-purple-300">
-              👁 Vision
-            </span>
-          )}
-          {model.capabilities.includes('reasoning') && (
-            <span className="text-xs px-1.5 py-0.5 rounded bg-blue-900/50 text-blue-300">
-              🧠 Reasoning
-            </span>
-          )}
-        </div>
+      <div className="flex items-center gap-2">
+        <span className={`text-neutral-300 ${isSelected ? 'text-neutral-100' : ''}`}>
+          {model.name}
+        </span>
+        {isSelected && (
+          <span className="text-neutral-500">•</span>
+        )}
       </div>
+      
+      <span className="text-neutral-600">${avgPrice}</span>
     </button>
-  );
-}
-
-// ============================================
-// ІКОНКИ
-// ============================================
-
-interface ModelIconProps {
-  provider: string;
-}
-
-function ModelIcon({ provider }: ModelIconProps) {
-  const icons: Record<string, string> = {
-    openai: '🟢',
-    anthropic: '🟠',
-    google: '🔵',
-    deepseek: '🟣',
-    xai: '⚫',
-    moonshot: '🌙',
-  };
-
-  return (
-    <span className="text-lg">{icons[provider] || '🤖'}</span>
-  );
-}
-
-interface ChevronIconProps {
-  isOpen: boolean;
-}
-
-function ChevronIcon({ isOpen }: ChevronIconProps) {
-  return (
-    <svg 
-      className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-        strokeWidth={2} 
-        d="M19 9l-7 7-7-7" 
-      />
-    </svg>
   );
 }
 

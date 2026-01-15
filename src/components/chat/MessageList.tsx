@@ -1,10 +1,12 @@
 'use client';
 
 /**
- * MessageList - Список повідомлень чату
+ * MessageList - Мінімалістичний список повідомлень
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { ChatMessage } from '@/lib/ai/types';
 import { StreamingMessage } from './StreamingMessage';
 
@@ -16,7 +18,6 @@ interface MessageListProps {
 export function MessageList({ messages, isStreaming }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Автоскрол до низу
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
@@ -26,16 +27,17 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-      {messages.map((message, index) => (
-        <MessageItem 
-          key={message.id} 
-          message={message}
-          isLast={index === messages.length - 1}
-          isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
-        />
-      ))}
-      <div ref={bottomRef} />
+    <div className="flex-1 overflow-y-auto">
+      <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+        {messages.map((message, index) => (
+          <MessageItem 
+            key={message.id} 
+            message={message}
+            isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+          />
+        ))}
+        <div ref={bottomRef} />
+      </div>
     </div>
   );
 }
@@ -46,103 +48,178 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
 
 interface MessageItemProps {
   message: ChatMessage;
-  isLast: boolean;
   isStreaming: boolean;
 }
 
-function MessageItem({ message, isLast, isStreaming }: MessageItemProps) {
+function MessageItem({ message, isStreaming }: MessageItemProps) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex gap-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
       {/* Avatar */}
-      {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 
-          flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-          AI
-        </div>
-      )}
+      <div className={`
+        w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium
+        ${isUser ? 'bg-neutral-700 text-neutral-300' : 'bg-neutral-800 text-neutral-400'}
+      `}>
+        {isUser ? 'U' : 'A'}
+      </div>
 
       {/* Content */}
       <div className={`
-        max-w-[80%] rounded-2xl px-4 py-3
-        ${isUser 
-          ? 'bg-emerald-600 text-white' 
-          : 'bg-zinc-800 text-zinc-100'
-        }
+        flex-1 min-w-0
+        ${isUser ? 'text-right' : ''}
       `}>
         {/* Images */}
         {message.images && message.images.length > 0 && (
-          <div className="flex gap-2 mb-2 flex-wrap">
+          <div className={`flex gap-2 mb-2 ${isUser ? 'justify-end' : ''}`}>
             {message.images.map((img, i) => (
               <img 
                 key={i}
                 src={img}
-                alt={`Attached ${i + 1}`}
-                className="max-w-48 max-h-48 rounded-lg object-cover"
+                alt=""
+                className="max-w-40 max-h-40 rounded object-cover"
               />
             ))}
           </div>
         )}
 
-        {/* Text content */}
-        {isStreaming && isLast ? (
-          <StreamingMessage content={message.content} />
-        ) : (
-          <MessageContent content={message.content} />
-        )}
-
-        {/* Timestamp */}
+        {/* Message bubble */}
         <div className={`
-          text-xs mt-2 
-          ${isUser ? 'text-emerald-200' : 'text-zinc-500'}
+          inline-block max-w-full rounded-lg px-3 py-2 text-sm
+          ${isUser 
+            ? 'bg-neutral-700 text-neutral-100' 
+            : 'bg-neutral-800/50 text-neutral-200'
+          }
+          ${!isUser ? 'text-left' : ''}
         `}>
+          {isStreaming ? (
+            <StreamingMessage content={message.content} />
+          ) : (
+            <MarkdownContent content={message.content} isUser={isUser} />
+          )}
+        </div>
+
+        {/* Time */}
+        <div className={`text-[10px] text-neutral-500 mt-1 ${isUser ? 'text-right' : ''}`}>
           {formatTime(message.createdAt)}
         </div>
       </div>
-
-      {/* User Avatar */}
-      {isUser && (
-        <div className="w-8 h-8 rounded-full bg-zinc-700 
-          flex items-center justify-center text-white text-sm flex-shrink-0">
-          👤
-        </div>
-      )}
     </div>
   );
 }
 
 // ============================================
-// MESSAGE CONTENT
+// MARKDOWN CONTENT
 // ============================================
 
-interface MessageContentProps {
+interface MarkdownContentProps {
   content: string;
+  isUser: boolean;
 }
 
-function MessageContent({ content }: MessageContentProps) {
-  // Простий рендер з підтримкою code blocks
-  const parts = content.split(/(```[\s\S]*?```)/g);
+function MarkdownContent({ content, isUser }: MarkdownContentProps) {
+  if (isUser) {
+    return <span className="whitespace-pre-wrap">{content}</span>;
+  }
 
   return (
-    <div className="prose prose-invert prose-sm max-w-none">
-      {parts.map((part, index) => {
-        if (part.startsWith('```')) {
-          const match = part.match(/```(\w+)?\n?([\s\S]*?)```/);
-          if (match) {
-            const [, lang, code] = match;
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        // Paragraphs
+        p: ({ children }) => (
+          <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>
+        ),
+        
+        // Headers
+        h1: ({ children }) => (
+          <h1 className="text-base font-semibold mt-4 mb-2 first:mt-0">{children}</h1>
+        ),
+        h2: ({ children }) => (
+          <h2 className="text-sm font-semibold mt-3 mb-2 first:mt-0">{children}</h2>
+        ),
+        h3: ({ children }) => (
+          <h3 className="text-sm font-medium mt-2 mb-1 first:mt-0">{children}</h3>
+        ),
+        
+        // Lists
+        ul: ({ children }) => (
+          <ul className="list-disc list-inside mb-2 space-y-0.5">{children}</ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="list-decimal list-inside mb-2 space-y-0.5">{children}</ol>
+        ),
+        li: ({ children }) => (
+          <li className="text-neutral-200">{children}</li>
+        ),
+        
+        // Links
+        a: ({ href, children }) => (
+          <a 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-neutral-400 underline hover:text-neutral-200 transition-colors"
+          >
+            {children}
+          </a>
+        ),
+        
+        // Inline code
+        code: ({ className, children }) => {
+          const isBlock = className?.includes('language-');
+          if (isBlock) {
+            const language = className?.replace('language-', '') || '';
             return (
-              <CodeBlock key={index} language={lang} code={code.trim()} />
+              <CodeBlock language={language} code={String(children).trim()} />
             );
           }
-        }
-        return (
-          <span key={index} className="whitespace-pre-wrap">
-            {part}
-          </span>
-        );
-      })}
-    </div>
+          return (
+            <code className="px-1 py-0.5 rounded bg-neutral-700 text-neutral-300 text-xs font-mono">
+              {children}
+            </code>
+          );
+        },
+        
+        // Code blocks
+        pre: ({ children }) => <>{children}</>,
+        
+        // Blockquote
+        blockquote: ({ children }) => (
+          <blockquote className="border-l-2 border-neutral-600 pl-3 my-2 text-neutral-400 italic">
+            {children}
+          </blockquote>
+        ),
+        
+        // Tables
+        table: ({ children }) => (
+          <div className="overflow-x-auto my-2">
+            <table className="min-w-full text-xs border-collapse">{children}</table>
+          </div>
+        ),
+        th: ({ children }) => (
+          <th className="border border-neutral-700 px-2 py-1 bg-neutral-800 text-left font-medium">
+            {children}
+          </th>
+        ),
+        td: ({ children }) => (
+          <td className="border border-neutral-700 px-2 py-1">{children}</td>
+        ),
+        
+        // Horizontal rule
+        hr: () => <hr className="my-3 border-neutral-700" />,
+        
+        // Strong & Em
+        strong: ({ children }) => (
+          <strong className="font-semibold text-neutral-100">{children}</strong>
+        ),
+        em: ({ children }) => (
+          <em className="italic text-neutral-300">{children}</em>
+        ),
+      }}
+    >
+      {content}
+    </ReactMarkdown>
   );
 }
 
@@ -151,35 +228,37 @@ function MessageContent({ content }: MessageContentProps) {
 // ============================================
 
 interface CodeBlockProps {
-  language?: string;
+  language: string;
   code: string;
 }
 
 function CodeBlock({ language, code }: CodeBlockProps) {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(code);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
-    <div className="relative my-2 rounded-lg overflow-hidden bg-zinc-900">
+    <div className="my-2 rounded overflow-hidden bg-neutral-900 border border-neutral-800">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 bg-zinc-800">
-        <span className="text-xs text-zinc-400">{language || 'code'}</span>
+      <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-800/50 border-b border-neutral-800">
+        <span className="text-[10px] text-neutral-500 uppercase tracking-wide">
+          {language || 'code'}
+        </span>
         <button
           onClick={handleCopy}
-          className="text-xs text-zinc-400 hover:text-white transition-colors"
+          className="text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors"
         >
-          {copied ? '✓ Скопійовано' : '📋 Копіювати'}
+          {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
       
       {/* Code */}
-      <pre className="p-3 overflow-x-auto text-sm">
-        <code>{code}</code>
+      <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
+        <code className="text-neutral-300 font-mono">{code}</code>
       </pre>
     </div>
   );
@@ -192,15 +271,12 @@ function CodeBlock({ language, code }: CodeBlockProps) {
 function EmptyState() {
   return (
     <div className="flex-1 flex items-center justify-center">
-      <div className="text-center">
-        <div className="text-6xl mb-4">💬</div>
-        <h3 className="text-xl font-semibold text-white mb-2">
-          Почніть розмову
-        </h3>
-        <p className="text-zinc-400 max-w-md">
-          Напишіть повідомлення, щоб почати спілкування з AI. 
-          Ви можете ставити питання, просити допомоги з кодом, 
-          або просто поспілкуватися.
+      <div className="text-center max-w-sm px-4">
+        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-800 flex items-center justify-center">
+          <span className="text-neutral-500 text-xl">?</span>
+        </div>
+        <p className="text-sm text-neutral-400">
+          Ask anything to start a conversation
         </p>
       </div>
     </div>
