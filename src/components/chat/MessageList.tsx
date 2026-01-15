@@ -13,9 +13,10 @@ import { StreamingMessage } from './StreamingMessage';
 interface MessageListProps {
   messages: ChatMessage[];
   isStreaming: boolean;
+  onEditMessage?: (messageId: string, newContent: string) => Promise<void>;
 }
 
-export function MessageList({ messages, isStreaming }: MessageListProps) {
+export function MessageList({ messages, isStreaming, onEditMessage }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,11 +31,12 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     <div className="flex-1 overflow-y-auto">
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {messages.map((message, index) => (
-          <MessageItem 
-            key={message.id} 
-            message={message}
-            isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
-          />
+        <MessageItem 
+          key={message.id} 
+          message={message}
+          isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+          onEdit={onEditMessage}
+        />
         ))}
         <div ref={bottomRef} />
       </div>
@@ -49,13 +51,45 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
 interface MessageItemProps {
   message: ChatMessage;
   isStreaming: boolean;
+  onEdit?: (messageId: string, newContent: string) => Promise<void>;
 }
 
-function MessageItem({ message, isStreaming }: MessageItemProps) {
+function MessageItem({ message, isStreaming, onEdit }: MessageItemProps) {
   const isUser = message.role === 'user';
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editContent, setEditContent] = React.useState(message.content);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+  React.useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = async () => {
+    if (editContent.trim() && editContent !== message.content && onEdit) {
+      await onEdit(message.id, editContent.trim());
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditContent(message.content);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
 
   return (
-    <div className={`flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
+    <div className={`group flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}>
       {/* Avatar */}
       <div className={`
         w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium
@@ -84,20 +118,68 @@ function MessageItem({ message, isStreaming }: MessageItemProps) {
         )}
 
         {/* Message bubble */}
-        <div className={`
-          inline-block max-w-full rounded-lg px-3 py-2 text-sm
-          ${isUser 
-            ? 'bg-slate-800 text-slate-100' 
-            : 'bg-slate-900/50 text-slate-200'
-          }
-          ${!isUser ? 'text-left' : ''}
-        `}>
-          {isStreaming ? (
-            <StreamingMessage content={message.content} />
-          ) : (
-            <MarkdownContent content={message.content} isUser={isUser} />
-          )}
-        </div>
+        {isEditing && isUser ? (
+          <div className="inline-block max-w-full">
+            <textarea
+              ref={textareaRef}
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="w-full px-3 py-2 bg-slate-800 rounded-lg text-sm text-slate-100 
+                border border-slate-700 focus:outline-none focus:border-slate-600 resize-none
+                min-h-[60px] max-h-[200px]"
+              rows={3}
+            />
+            <div className="flex gap-2 mt-2 justify-end">
+              <button
+                onClick={handleCancel}
+                className="px-2 py-1 text-xs rounded bg-slate-900 hover:bg-slate-800 
+                  text-slate-400 hover:text-slate-300 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-2 py-1 text-xs rounded bg-slate-700 hover:bg-slate-600 
+                  text-slate-200 transition-colors"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className={`
+            inline-block max-w-full rounded-lg px-3 py-2 text-sm relative
+            ${isUser 
+              ? 'bg-slate-800 text-slate-100' 
+              : 'bg-slate-900/50 text-slate-200'
+            }
+            ${!isUser ? 'text-left' : ''}
+          `}>
+            {isStreaming ? (
+              <StreamingMessage content={message.content} />
+            ) : (
+              <MarkdownContent content={message.content} isUser={isUser} />
+            )}
+            
+            {/* Edit button (only for user messages) */}
+            {isUser && onEdit && !isStreaming && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 
+                  p-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-500 
+                  hover:text-slate-300 transition-opacity text-[10px]"
+                title="Edit message"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" 
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Time */}
         <div className={`text-[10px] text-slate-500 mt-1 ${isUser ? 'text-right' : ''}`}>

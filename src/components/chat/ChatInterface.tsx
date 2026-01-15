@@ -30,6 +30,7 @@ export function ChatInterface({
     currentModel,
     currentChatId,
     sendMessage,
+    editMessage,
     setModel,
     clearMessages,
     stop,
@@ -127,7 +128,8 @@ export function ChatInterface({
       {/* Messages */}
       <MessageList 
         messages={messages} 
-        isStreaming={isStreaming} 
+        isStreaming={isStreaming}
+        onEditMessage={editMessage}
       />
 
       {/* Input */}

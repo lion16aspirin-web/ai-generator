@@ -25,6 +25,7 @@ interface SendMessageOptions {
 
 interface UseChatReturn extends ChatState {
   sendMessage: (content: string, options?: SendMessageOptions) => Promise<void>;
+  editMessage: (messageId: string, newContent: string) => Promise<void>;
   setModel: (modelId: string) => void;
   clearMessages: () => void;
   regenerate: () => Promise<void>;
@@ -276,6 +277,78 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
     }));
   }, []);
 
+  // Редагування повідомлення
+  const editMessage = useCallback(async (messageId: string, newContent: string) => {
+    const messageIndex = messagesRef.current.findIndex(m => m.id === messageId);
+    if (messageIndex === -1 || messagesRef.current[messageIndex].role !== 'user') {
+      return;
+    }
+
+    // Оновлюємо повідомлення та видаляємо всі після нього
+    const updatedMessages = messagesRef.current.slice(0, messageIndex);
+    const editedMessage = {
+      ...messagesRef.current[messageIndex],
+      content: newContent,
+    };
+    updatedMessages.push(editedMessage);
+    
+    messagesRef.current = updatedMessages;
+    setState(prev => ({
+      ...prev,
+      messages: updatedMessages,
+      isLoading: true,
+      isStreaming: true,
+      error: null,
+    }));
+
+    // Відправляємо оновлене повідомлення
+    abortControllerRef.current = new AbortController();
+    const modelToUse = currentModelRef.current;
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages: updatedMessages,
+          stream: true,
+          chatId: chatIdRef.current,
+        }),
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send message');
+      }
+
+      const newChatId = response.headers.get('X-Chat-Id');
+      if (newChatId && !chatIdRef.current) {
+        chatIdRef.current = newChatId;
+        setState(prev => ({ ...prev, currentChatId: newChatId }));
+      }
+
+      await handleStreamResponse(response);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          isStreaming: false,
+        }));
+        return;
+      }
+
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        isStreaming: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }));
+    }
+  }, []);
+
   // Регенерація останньої відповіді
   const regenerate = useCallback(async () => {
     const lastUserMessage = [...state.messages]
@@ -307,6 +380,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
   return {
     ...state,
     sendMessage,
+    editMessage,
     setModel,
     clearMessages,
     regenerate,
