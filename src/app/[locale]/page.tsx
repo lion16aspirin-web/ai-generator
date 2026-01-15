@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageMetadata } from '@/components/seo/PageMetadata';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { 
@@ -58,6 +59,14 @@ export default function HomePage({ params }: HomePageProps) {
 
   return (
     <MainLayout locale={locale}>
+      <PageMetadata 
+        title={locale === 'uk' ? 'Головна' : 'Home'}
+        description={locale === 'uk' 
+          ? 'AI Generator - платформа для генерації тексту, зображень, відео та анімацій. GPT-5, Claude, Gemini, Sora, DALL-E 3.'
+          : 'AI Generator - platform for generating text, images, videos and animations. GPT-5, Claude, Gemini, Sora, DALL-E 3.'
+        }
+        path={`/${locale}`}
+      />
       {/* Hero Section */}
       <section className="relative py-20 overflow-hidden">
         {/* Background Effects */}

@@ -4,12 +4,10 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { SessionProvider } from '@/components/providers/SessionProvider';
+import { defaultMetadata } from '@/lib/seo/metadata';
 import '../globals.css';
 
-export const metadata: Metadata = {
-  title: 'AI Generator - Create with AI',
-  description: 'Generate text, images, videos and animations with AI',
-};
+export const metadata: Metadata = defaultMetadata;
 
 interface LocaleLayoutProps {
   children: React.ReactNode;

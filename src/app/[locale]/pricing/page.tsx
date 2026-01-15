@@ -44,6 +44,14 @@ export default function PricingPage({ params }: PricingPageProps) {
 
   return (
     <MainLayout locale={locale}>
+      <PageMetadata 
+        title={locale === 'uk' ? 'Тарифи' : 'Pricing'}
+        description={locale === 'uk' 
+          ? 'Гнучкі тарифи для генерації тексту, зображень та відео. Від безкоштовного плану до бізнес-рішень.'
+          : 'Flexible pricing for text, image and video generation. From free plan to business solutions.'
+        }
+        path={`/${locale}/pricing`}
+      />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">

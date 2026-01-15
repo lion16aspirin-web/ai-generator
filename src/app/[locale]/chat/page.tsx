@@ -4,6 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { ChatInterface } from '@/components/chat/ChatInterface';
 import { ChatSidebar } from '@/components/chat/ChatSidebar';
+import { PageMetadata } from '@/components/seo/PageMetadata';
 
 interface ChatPageProps {
   params: Promise<{ locale: string }>;
@@ -31,6 +32,14 @@ export default function ChatPage({ params }: ChatPageProps) {
 
   return (
     <MainLayout locale={locale}>
+      <PageMetadata 
+        title={locale === 'uk' ? 'AI Чат' : 'AI Chat'}
+        description={locale === 'uk' 
+          ? 'Спілкуйся з AI моделями: GPT-5, Claude, Gemini та інші. Швидкі відповіді, пам\'ять чатів, підтримка Markdown.'
+          : 'Chat with AI models: GPT-5, Claude, Gemini and more. Fast responses, chat memory, Markdown support.'
+        }
+        path={`/${locale}/chat`}
+      />
       <div className="flex h-[calc(100vh-4rem)]">
         <ChatSidebar
           selectedChatId={selectedChatId}

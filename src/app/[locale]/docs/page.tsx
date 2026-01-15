@@ -3,6 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageMetadata } from '@/components/seo/PageMetadata';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   Rocket, 
@@ -56,6 +57,14 @@ export default function DocsPage({ params }: DocsPageProps) {
 
   return (
     <MainLayout locale={locale}>
+      <PageMetadata 
+        title={locale === 'uk' ? 'Документація' : 'Documentation'}
+        description={locale === 'uk' 
+          ? 'Повна документація по всіх AI моделях: GPT-5, Claude, Gemini, Sora, DALL-E 3. Приклади використання та поради.'
+          : 'Complete documentation for all AI models: GPT-5, Claude, Gemini, Sora, DALL-E 3. Usage examples and tips.'
+        }
+        path={`/${locale}/docs`}
+      />
       <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
