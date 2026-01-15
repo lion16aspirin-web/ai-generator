@@ -7,6 +7,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { ChatMessage } from '@/lib/ai/types';
 import { StreamingMessage } from './StreamingMessage';
 
@@ -338,10 +340,21 @@ function CodeBlock({ language, code }: CodeBlockProps) {
         </button>
       </div>
       
-      {/* Code */}
-      <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
-        <code className="text-slate-300 font-mono">{code}</code>
-      </pre>
+      {/* Code with syntax highlighting */}
+      <SyntaxHighlighter
+        language={language || 'text'}
+        style={oneDark}
+        customStyle={{
+          margin: 0,
+          padding: '12px',
+          fontSize: '12px',
+          lineHeight: '1.5',
+          background: '#0f172a',
+        }}
+        PreTag="div"
+      >
+        {code}
+      </SyntaxHighlighter>
     </div>
   );
 }
