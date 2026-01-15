@@ -60,11 +60,13 @@ export interface ChatResponse {
   model: string;
   usage: TokenUsage;
   finishReason: 'stop' | 'length' | 'error';
+  chatId?: string;
 }
 
 export interface StreamChunk {
   content: string;
   done: boolean;
+  chatId?: string;
 }
 
 // ============================================

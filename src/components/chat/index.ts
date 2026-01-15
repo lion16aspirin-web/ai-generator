@@ -7,3 +7,5 @@ export { ModelSelector } from './ModelSelector';
 export { MessageList } from './MessageList';
 export { MessageInput } from './MessageInput';
 export { StreamingMessage } from './StreamingMessage';
+export { ChatSidebar } from './ChatSidebar';
+export { ChatItem } from './ChatItem';

@@ -4,7 +4,7 @@
  * ChatInterface - Головний компонент чату
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useChat } from '@/hooks/useChat';
 import { useTokens, formatTokens } from '@/hooks/useTokens';
 import { ModelSelector } from './ModelSelector';
@@ -13,23 +13,36 @@ import { MessageInput } from './MessageInput';
 
 interface ChatInterfaceProps {
   initialModel?: string;
+  chatId?: string | null;
+  onChatCreated?: (chatId: string) => void;
 }
 
-export function ChatInterface({ initialModel = 'gpt-5.1' }: ChatInterfaceProps) {
+export function ChatInterface({ 
+  initialModel = 'gpt-4o',
+  chatId,
+  onChatCreated,
+}: ChatInterfaceProps) {
   const {
     messages,
     isLoading,
     isStreaming,
     error,
     currentModel,
+    currentChatId,
     sendMessage,
     setModel,
     clearMessages,
-    regenerate,
     stop,
-  } = useChat(initialModel);
+  } = useChat(initialModel, chatId || undefined);
 
   const { available, loading: tokensLoading } = useTokens();
+
+  // Сповіщаємо батьківський компонент про створення нового чату
+  useEffect(() => {
+    if (currentChatId && !chatId && onChatCreated) {
+      onChatCreated(currentChatId);
+    }
+  }, [currentChatId, chatId, onChatCreated]);
 
   return (
     <div className="flex flex-col h-full bg-zinc-900">

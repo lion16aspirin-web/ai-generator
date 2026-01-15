@@ -207,14 +207,17 @@ async function* saveStreamingResponse(
   chatId: string,
   model: string,
   estimatedTokens: number
-): AsyncGenerator<{ content: string; done: boolean }> {
+): AsyncGenerator<{ content: string; done: boolean; chatId?: string }> {
   let fullContent = '';
   
   for await (const chunk of generator) {
     if (!chunk.done) {
       fullContent += chunk.content;
+      yield chunk;
+    } else {
+      // Останній чанк - додаємо chatId
+      yield { ...chunk, chatId };
     }
-    yield chunk;
   }
 
   // Зберігаємо повну відповідь після завершення

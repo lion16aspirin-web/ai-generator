@@ -1,8 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { ChatInterface } from '@/components/chat';
+import { ChatInterface } from '@/components/chat/ChatInterface';
+import { ChatSidebar } from '@/components/chat/ChatSidebar';
 
 interface ChatPageProps {
   params: Promise<{ locale: string }>;
@@ -10,11 +11,48 @@ interface ChatPageProps {
 
 export default function ChatPage({ params }: ChatPageProps) {
   const { locale } = React.use(params);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [chatKey, setChatKey] = useState(0); // Для перемонтування ChatInterface
+
+  // Створення нового чату
+  const handleNewChat = useCallback(() => {
+    setSelectedChatId(null);
+    setChatKey(prev => prev + 1); // Форсуємо перемонтування
+  }, []);
+
+  // Вибір чату
+  const handleSelectChat = useCallback((chatId: string | null) => {
+    setSelectedChatId(chatId);
+    setChatKey(prev => prev + 1); // Форсуємо перемонтування
+  }, []);
+
+  // Коли створено новий чат - оновлюємо ID
+  const handleChatCreated = useCallback((chatId: string) => {
+    setSelectedChatId(chatId);
+  }, []);
 
   return (
     <MainLayout locale={locale}>
-      <div className="h-[calc(100vh-8rem)]">
-        <ChatInterface initialModel="gpt-5.1" />
+      <div className="flex h-[calc(100vh-4rem)]">
+        {/* Sidebar */}
+        <ChatSidebar
+          selectedChatId={selectedChatId}
+          onSelectChat={handleSelectChat}
+          onNewChat={handleNewChat}
+          isCollapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        />
+
+        {/* Chat Interface */}
+        <div className="flex-1 min-w-0">
+          <ChatInterface
+            key={chatKey}
+            initialModel="gpt-4o"
+            chatId={selectedChatId}
+            onChatCreated={handleChatCreated}
+          />
+        </div>
       </div>
     </MainLayout>
   );
