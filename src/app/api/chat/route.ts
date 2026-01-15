@@ -215,26 +215,24 @@ async function* saveStreamingResponse(
       fullContent += chunk.content;
       yield chunk;
     } else {
+      // Зберігаємо відповідь ПЕРЕД останнім yield
+      if (fullContent) {
+        try {
+          await prisma.message.create({
+            data: {
+              chatId,
+              role: 'assistant',
+              content: fullContent,
+              model,
+              tokens: estimatedTokens,
+            },
+          });
+        } catch (error) {
+          console.error('Failed to save streaming message:', error);
+        }
+      }
       // Останній чанк - додаємо chatId
       yield { ...chunk, chatId };
-    }
-  }
-
-  // Зберігаємо повну відповідь після завершення
-  if (fullContent) {
-    try {
-      await prisma.message.create({
-        data: {
-          chatId,
-          role: 'assistant',
-          content: fullContent,
-          model,
-          tokens: estimatedTokens,
-        },
-      });
-    } catch (error) {
-      // Не блокуємо відповідь якщо збереження не вдалося
-      console.error('Failed to save streaming message:', error);
     }
   }
 }
