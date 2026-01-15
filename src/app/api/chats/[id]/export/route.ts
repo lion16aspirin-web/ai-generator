@@ -50,9 +50,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const chatTitle = chat.title || 'Без назви';
+
     if (format === 'json') {
       return NextResponse.json({
-        title: chat.title,
+        title: chatTitle,
         model: chat.model,
         createdAt: chat.createdAt.toISOString(),
         messages: chat.messages.map(m => ({
@@ -65,12 +67,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Markdown format
-    const markdown = formatAsMarkdown(chat);
+    const markdown = formatAsMarkdown({
+      ...chat,
+      title: chatTitle,
+    });
     
     return new NextResponse(markdown, {
       headers: {
         'Content-Type': 'text/markdown; charset=utf-8',
-        'Content-Disposition': `attachment; filename="${sanitizeFilename(chat.title)}.md"`,
+        'Content-Disposition': `attachment; filename="${sanitizeFilename(chatTitle)}.md"`,
       }
     });
 
