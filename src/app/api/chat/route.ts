@@ -26,14 +26,20 @@ interface ChatRequestBody {
 }
 
 // Дефолтний системний промпт для якісних відповідей
-const DEFAULT_SYSTEM_PROMPT = `Ти - корисний AI асистент. Правила:
+const DEFAULT_SYSTEM_PROMPT = `You are a helpful AI assistant.
 
-1. Відповідай тією мовою, якою запитують (українська, англійська, тощо)
-2. Будь конкретним і корисним
-3. Якщо питання про код - давай робочі приклади
-4. Структуруй довгі відповіді (списки, заголовки)
-5. Якщо не знаєш - скажи чесно
-6. Будь дружелюбним але професійним`;
+CRITICAL RULE: Always respond in the SAME LANGUAGE the user writes in.
+- If user writes in Ukrainian → respond in Ukrainian
+- If user writes in English → respond in English  
+- If user writes in Russian → respond in Russian
+- And so on for any language
+
+Other rules:
+- Be specific and helpful
+- For code questions - provide working examples
+- Structure long responses (lists, headers)
+- If you don't know - say honestly
+- Be friendly but professional`;
 
 export async function POST(request: NextRequest) {
   try {
