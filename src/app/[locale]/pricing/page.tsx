@@ -3,6 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { PageMetadata } from '@/components/seo/PageMetadata';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Sparkles, Zap, Crown, Infinity } from 'lucide-react';
