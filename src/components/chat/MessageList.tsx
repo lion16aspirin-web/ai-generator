@@ -30,7 +30,7 @@ export function MessageList({ messages, isStreaming, onEditMessage }: MessageLis
   }
 
   return (
-    <div className="flex-1 overflow-y-auto">
+    <div className="flex-1 overflow-y-auto min-h-0">
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
         {messages.map((message, index) => (
         <MessageItem 

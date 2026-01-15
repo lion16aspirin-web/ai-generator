@@ -84,7 +84,7 @@ export function ChatInterface({
   }, [currentChatId, chatId, onChatCreated]);
 
   return (
-    <div className="flex flex-col h-full bg-slate-950">
+    <div className="flex flex-col h-full bg-slate-950 overflow-hidden">
       {/* Notification */}
       {notification && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50
@@ -94,8 +94,8 @@ export function ChatInterface({
         </div>
       )}
       
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
+      {/* Header - Fixed */}
+      <header className="flex-shrink-0 flex items-center justify-between px-4 py-2 border-b border-slate-800 bg-slate-950">
         <div className="flex items-center gap-3">
           <ModelSelector
             selectedModel={currentModel}
@@ -132,27 +132,29 @@ export function ChatInterface({
         </div>
       </header>
 
-      {/* Error */}
-      {error && (
-        <div className="mx-4 mt-3 px-3 py-2 rounded text-xs bg-red-900/20 border border-red-900/50 text-red-400">
-          {error}
-        </div>
-      )}
+      {/* Messages - Scrollable */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {error && (
+          <div className="flex-shrink-0 mx-4 mt-3 px-3 py-2 rounded text-xs bg-red-900/20 border border-red-900/50 text-red-400">
+            {error}
+          </div>
+        )}
+        <MessageList 
+          messages={messages} 
+          isStreaming={isStreaming}
+          onEditMessage={editMessage}
+        />
+      </div>
 
-      {/* Messages */}
-      <MessageList 
-        messages={messages} 
-        isStreaming={isStreaming}
-        onEditMessage={editMessage}
-      />
-
-      {/* Input */}
-      <MessageInput
+      {/* Input - Fixed */}
+      <div className="flex-shrink-0">
+        <MessageInput
         ref={inputRef}
         onSend={(content, images) => sendMessage(content, { images })}
         disabled={isLoading || isStreaming || available < 10}
-        placeholder={available < 10 ? 'No tokens...' : 'Message...'}
-      />
+          placeholder={available < 10 ? 'No tokens...' : 'Message...'}
+        />
+      </div>
     </div>
   );
 }
