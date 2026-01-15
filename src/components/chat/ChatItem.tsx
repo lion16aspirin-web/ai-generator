@@ -80,8 +80,8 @@ export function ChatItem({
       className={`
         group relative px-2 py-1.5 rounded cursor-pointer text-xs
         ${isSelected 
-          ? 'bg-neutral-800 text-neutral-200' 
-          : 'text-neutral-400 hover:bg-neutral-800/50 hover:text-neutral-300'
+          ? 'bg-slate-900 text-slate-200' 
+          : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-300'
         }
       `}
     >
@@ -89,11 +89,11 @@ export function ChatItem({
         <input
           ref={inputRef}
           type="text"
-          value={editTitle}
-          onChange={(e) => setEditTitle(e.target.value)}
-          onBlur={handleSaveTitle}
-          onKeyDown={handleKeyDown}
-          className="w-full bg-neutral-700 border border-neutral-600 rounded px-1.5 py-0.5 text-xs text-neutral-200 outline-none"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            onBlur={handleSaveTitle}
+            onKeyDown={handleKeyDown}
+            className="w-full bg-slate-800 border border-slate-700 rounded px-1.5 py-0.5 text-xs text-slate-200 outline-none"
         />
       ) : (
         <div className="flex items-center justify-between gap-1">
@@ -106,22 +106,22 @@ export function ChatItem({
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-neutral-700 transition-opacity"
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-800 transition-opacity"
             >
-              <svg className="w-3 h-3 text-neutral-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3 h-3 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 top-5 z-20 w-28 bg-neutral-800 border border-neutral-700 rounded shadow-lg py-0.5">
+              <div className="absolute right-0 top-5 z-20 w-28 bg-slate-900 border border-slate-800 rounded shadow-lg py-0.5">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowMenu(false);
                     setIsEditing(true);
                   }}
-                  className="w-full px-2 py-1 text-left text-[10px] text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
+                  className="w-full px-2 py-1 text-left text-[10px] text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 >
                   Rename
                 </button>
@@ -131,7 +131,7 @@ export function ChatItem({
                     setShowMenu(false);
                     onExport('md');
                   }}
-                  className="w-full px-2 py-1 text-left text-[10px] text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
+                  className="w-full px-2 py-1 text-left text-[10px] text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 >
                   Export MD
                 </button>
@@ -141,18 +141,18 @@ export function ChatItem({
                     setShowMenu(false);
                     onExport('json');
                   }}
-                  className="w-full px-2 py-1 text-left text-[10px] text-neutral-400 hover:bg-neutral-700 hover:text-neutral-200"
+                  className="w-full px-2 py-1 text-left text-[10px] text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 >
                   Export JSON
                 </button>
-                <hr className="my-0.5 border-neutral-700" />
+                <hr className="my-0.5 border-slate-800" />
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteClick();
                   }}
-                  className={`w-full px-2 py-1 text-left text-[10px] hover:bg-neutral-700 ${
-                    confirmDelete ? 'text-red-400' : 'text-neutral-400 hover:text-neutral-200'
+                  className={`w-full px-2 py-1 text-left text-[10px] hover:bg-slate-800 ${
+                    confirmDelete ? 'text-red-400' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
                   {confirmDelete ? 'Click to confirm' : 'Delete'}

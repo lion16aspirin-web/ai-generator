@@ -69,18 +69,18 @@ export function ChatInterface({
   }, [currentChatId, chatId, onChatCreated]);
 
   return (
-    <div className="flex flex-col h-full bg-neutral-900">
+    <div className="flex flex-col h-full bg-slate-950">
       {/* Notification */}
       {notification && (
         <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50
-          px-3 py-1.5 bg-neutral-800 text-neutral-300 rounded text-xs
-          border border-neutral-700 animate-fadeIn">
+          px-3 py-1.5 bg-slate-900 text-slate-300 rounded text-xs
+          border border-slate-800 animate-fadeIn">
           {notification}
         </div>
       )}
       
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-2 border-b border-neutral-800">
+      <header className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
         <div className="flex items-center gap-3">
           <ModelSelector
             selectedModel={currentModel}
@@ -91,8 +91,8 @@ export function ChatInterface({
           {(isLoading || isStreaming) && (
             <button
               onClick={stop}
-              className="px-2 py-1 text-xs rounded bg-neutral-800 hover:bg-neutral-700 
-                text-neutral-400 hover:text-neutral-200 transition-colors border border-neutral-700"
+              className="px-2 py-1 text-xs rounded bg-slate-900 hover:bg-slate-800 
+                text-slate-400 hover:text-slate-200 transition-colors border border-slate-800"
             >
               Stop
             </button>
@@ -101,7 +101,7 @@ export function ChatInterface({
 
         <div className="flex items-center gap-3">
           {/* Tokens */}
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-slate-500">
             {tokensLoading ? '...' : formatTokens(available)}
           </span>
 
@@ -109,7 +109,7 @@ export function ChatInterface({
           {messages.length > 0 && !isLoading && (
             <button
               onClick={clearMessages}
-              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
             >
               Clear
             </button>

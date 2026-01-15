@@ -34,9 +34,9 @@ export function ModelSelector({
         disabled={disabled}
         className={`
           flex items-center gap-2 px-2.5 py-1.5 rounded
-          bg-neutral-800 hover:bg-neutral-750 border border-neutral-700
+          bg-slate-900 hover:bg-slate-800 border border-slate-800
           text-xs transition-colors
-          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-neutral-600'}
+          ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-slate-700'}
         `}
       >
         <span className="text-neutral-400">{currentModel?.name || 'Select'}</span>
@@ -59,11 +59,11 @@ export function ModelSelector({
           />
           
           <div className="absolute top-full left-0 mt-1 w-64 max-h-80 overflow-y-auto
-            bg-neutral-900 border border-neutral-800 rounded shadow-xl z-20">
+            bg-slate-950 border border-slate-800 rounded shadow-xl z-20">
             {modelGroups.map(group => (
               <div key={group.provider}>
-                <div className="px-3 py-1.5 text-[10px] text-neutral-500 uppercase tracking-wider 
-                  bg-neutral-850 sticky top-0 border-b border-neutral-800">
+                <div className="px-3 py-1.5 text-[10px] text-slate-500 uppercase tracking-wider 
+                  bg-slate-900 sticky top-0 border-b border-slate-800">
                   {group.name}
                 </div>
                 
@@ -101,20 +101,20 @@ function ModelOption({ model, isSelected, onClick }: ModelOptionProps) {
       onClick={onClick}
       className={`
         w-full px-3 py-2 flex items-center justify-between text-left
-        hover:bg-neutral-800 transition-colors text-xs
-        ${isSelected ? 'bg-neutral-800' : ''}
+        hover:bg-slate-900 transition-colors text-xs
+        ${isSelected ? 'bg-slate-900' : ''}
       `}
     >
       <div className="flex items-center gap-2">
-        <span className={`text-neutral-300 ${isSelected ? 'text-neutral-100' : ''}`}>
+        <span className={`text-slate-300 ${isSelected ? 'text-slate-100' : ''}`}>
           {model.name}
         </span>
         {isSelected && (
-          <span className="text-neutral-500">•</span>
+          <span className="text-slate-500">•</span>
         )}
       </div>
       
-      <span className="text-neutral-600">${avgPrice}</span>
+      <span className="text-slate-600">${avgPrice}</span>
     </button>
   );
 }

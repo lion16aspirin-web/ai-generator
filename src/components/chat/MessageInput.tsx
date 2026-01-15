@@ -69,7 +69,7 @@ export function MessageInput({
   };
 
   return (
-    <div className="border-t border-neutral-800 p-3">
+    <div className="border-t border-slate-800 p-3">
       <div className="max-w-3xl mx-auto">
         {/* Image previews */}
         {images.length > 0 && (
@@ -83,9 +83,9 @@ export function MessageInput({
                 />
                 <button
                   onClick={() => removeImage(index)}
-                  className="absolute -top-1 -right-1 w-4 h-4 bg-neutral-700 
-                    rounded-full text-neutral-400 text-xs flex items-center justify-center
-                    opacity-0 group-hover:opacity-100 transition-opacity hover:bg-neutral-600"
+                  className="absolute -top-1 -right-1 w-4 h-4 bg-slate-800 
+                    rounded-full text-slate-400 text-xs flex items-center justify-center
+                    opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700"
                 >
                   ×
                 </button>
@@ -100,7 +100,7 @@ export function MessageInput({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="p-2 text-neutral-500 hover:text-neutral-300 transition-colors
+            className="p-2 text-slate-500 hover:text-slate-300 transition-colors
               disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,9 +128,9 @@ export function MessageInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 px-3 py-2 bg-neutral-800 rounded text-sm resize-none
-              text-neutral-200 placeholder-neutral-500 border border-neutral-700
-              focus:outline-none focus:border-neutral-600
+            className="flex-1 px-3 py-2 bg-slate-900 rounded text-sm resize-none
+              text-slate-200 placeholder-slate-500 border border-slate-800
+              focus:outline-none focus:border-slate-700
               disabled:opacity-50 disabled:cursor-not-allowed"
           />
 
@@ -138,7 +138,7 @@ export function MessageInput({
           <button
             onClick={handleSend}
             disabled={disabled || (!message.trim() && images.length === 0)}
-            className="p-2 text-neutral-500 hover:text-neutral-200 transition-colors
+            className="p-2 text-slate-500 hover:text-slate-200 transition-colors
               disabled:opacity-30 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

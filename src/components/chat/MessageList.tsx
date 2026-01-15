@@ -59,7 +59,7 @@ function MessageItem({ message, isStreaming }: MessageItemProps) {
       {/* Avatar */}
       <div className={`
         w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-medium
-        ${isUser ? 'bg-neutral-700 text-neutral-300' : 'bg-neutral-800 text-neutral-400'}
+        ${isUser ? 'bg-slate-800 text-slate-300' : 'bg-slate-900 text-slate-400'}
       `}>
         {isUser ? 'U' : 'A'}
       </div>
@@ -87,8 +87,8 @@ function MessageItem({ message, isStreaming }: MessageItemProps) {
         <div className={`
           inline-block max-w-full rounded-lg px-3 py-2 text-sm
           ${isUser 
-            ? 'bg-neutral-700 text-neutral-100' 
-            : 'bg-neutral-800/50 text-neutral-200'
+            ? 'bg-slate-800 text-slate-100' 
+            : 'bg-slate-900/50 text-slate-200'
           }
           ${!isUser ? 'text-left' : ''}
         `}>
@@ -100,7 +100,7 @@ function MessageItem({ message, isStreaming }: MessageItemProps) {
         </div>
 
         {/* Time */}
-        <div className={`text-[10px] text-neutral-500 mt-1 ${isUser ? 'text-right' : ''}`}>
+        <div className={`text-[10px] text-slate-500 mt-1 ${isUser ? 'text-right' : ''}`}>
           {formatTime(message.createdAt)}
         </div>
       </div>
@@ -159,7 +159,7 @@ function MarkdownContent({ content, isUser }: MarkdownContentProps) {
             href={href} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-neutral-400 underline hover:text-neutral-200 transition-colors"
+            className="text-slate-400 underline hover:text-slate-200 transition-colors"
           >
             {children}
           </a>
@@ -175,7 +175,7 @@ function MarkdownContent({ content, isUser }: MarkdownContentProps) {
             );
           }
           return (
-            <code className="px-1 py-0.5 rounded bg-neutral-700 text-neutral-300 text-xs font-mono">
+            <code className="px-1 py-0.5 rounded bg-slate-800 text-slate-300 text-xs font-mono">
               {children}
             </code>
           );
@@ -186,7 +186,7 @@ function MarkdownContent({ content, isUser }: MarkdownContentProps) {
         
         // Blockquote
         blockquote: ({ children }) => (
-          <blockquote className="border-l-2 border-neutral-600 pl-3 my-2 text-neutral-400 italic">
+          <blockquote className="border-l-2 border-slate-700 pl-3 my-2 text-slate-400 italic">
             {children}
           </blockquote>
         ),
@@ -198,23 +198,23 @@ function MarkdownContent({ content, isUser }: MarkdownContentProps) {
           </div>
         ),
         th: ({ children }) => (
-          <th className="border border-neutral-700 px-2 py-1 bg-neutral-800 text-left font-medium">
+          <th className="border border-slate-800 px-2 py-1 bg-slate-900 text-left font-medium">
             {children}
           </th>
         ),
         td: ({ children }) => (
-          <td className="border border-neutral-700 px-2 py-1">{children}</td>
+          <td className="border border-slate-800 px-2 py-1">{children}</td>
         ),
         
         // Horizontal rule
-        hr: () => <hr className="my-3 border-neutral-700" />,
+        hr: () => <hr className="my-3 border-slate-800" />,
         
         // Strong & Em
         strong: ({ children }) => (
-          <strong className="font-semibold text-neutral-100">{children}</strong>
+          <strong className="font-semibold text-slate-100">{children}</strong>
         ),
         em: ({ children }) => (
-          <em className="italic text-neutral-300">{children}</em>
+          <em className="italic text-slate-300">{children}</em>
         ),
       }}
     >
@@ -242,15 +242,15 @@ function CodeBlock({ language, code }: CodeBlockProps) {
   };
 
   return (
-    <div className="my-2 rounded overflow-hidden bg-neutral-900 border border-neutral-800">
+    <div className="my-2 rounded overflow-hidden bg-slate-900 border border-slate-800">
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-neutral-800/50 border-b border-neutral-800">
-        <span className="text-[10px] text-neutral-500 uppercase tracking-wide">
+      <div className="flex items-center justify-between px-3 py-1.5 bg-slate-900/50 border-b border-slate-800">
+        <span className="text-[10px] text-slate-500 uppercase tracking-wide">
           {language || 'code'}
         </span>
         <button
           onClick={handleCopy}
-          className="text-[10px] text-neutral-500 hover:text-neutral-300 transition-colors"
+          className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors"
         >
           {copied ? 'Copied' : 'Copy'}
         </button>
@@ -258,7 +258,7 @@ function CodeBlock({ language, code }: CodeBlockProps) {
       
       {/* Code */}
       <pre className="p-3 overflow-x-auto text-xs leading-relaxed">
-        <code className="text-neutral-300 font-mono">{code}</code>
+        <code className="text-slate-300 font-mono">{code}</code>
       </pre>
     </div>
   );
@@ -272,10 +272,10 @@ function EmptyState() {
   return (
     <div className="flex-1 flex items-center justify-center">
       <div className="text-center max-w-sm px-4">
-        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-800 flex items-center justify-center">
-          <span className="text-neutral-500 text-xl">?</span>
+        <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-slate-900 flex items-center justify-center">
+          <span className="text-slate-500 text-xl">?</span>
         </div>
-        <p className="text-sm text-neutral-400">
+        <p className="text-sm text-slate-400">
           Ask anything to start a conversation
         </p>
       </div>
