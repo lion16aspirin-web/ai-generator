@@ -12,22 +12,18 @@ interface ChatPageProps {
 export default function ChatPage({ params }: ChatPageProps) {
   const { locale } = React.use(params);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [chatKey, setChatKey] = useState(0); // Для перемонтування ChatInterface
+  const [chatKey, setChatKey] = useState(0);
 
-  // Створення нового чату
   const handleNewChat = useCallback(() => {
     setSelectedChatId(null);
-    setChatKey(prev => prev + 1); // Форсуємо перемонтування
+    setChatKey(prev => prev + 1);
   }, []);
 
-  // Вибір чату
   const handleSelectChat = useCallback((chatId: string | null) => {
     setSelectedChatId(chatId);
-    setChatKey(prev => prev + 1); // Форсуємо перемонтування
+    setChatKey(prev => prev + 1);
   }, []);
 
-  // Коли створено новий чат - оновлюємо ID
   const handleChatCreated = useCallback((chatId: string) => {
     setSelectedChatId(chatId);
   }, []);
@@ -35,16 +31,12 @@ export default function ChatPage({ params }: ChatPageProps) {
   return (
     <MainLayout locale={locale}>
       <div className="flex h-[calc(100vh-4rem)]">
-        {/* Sidebar */}
         <ChatSidebar
           selectedChatId={selectedChatId}
           onSelectChat={handleSelectChat}
           onNewChat={handleNewChat}
-          isCollapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        {/* Chat Interface */}
         <div className="flex-1 min-w-0">
           <ChatInterface
             key={chatKey}
