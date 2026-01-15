@@ -25,6 +25,16 @@ interface ChatRequestBody {
   chatId?: string; // ID існуючого чату або undefined для нового
 }
 
+// Дефолтний системний промпт для якісних відповідей
+const DEFAULT_SYSTEM_PROMPT = `Ти - корисний AI асистент. Правила:
+
+1. Відповідай тією мовою, якою запитують (українська, англійська, тощо)
+2. Будь конкретним і корисним
+3. Якщо питання про код - давай робочі приклади
+4. Структуруй довгі відповіді (списки, заголовки)
+5. Якщо не знаєш - скажи чесно
+6. Будь дружелюбним але професійним`;
+
 export async function POST(request: NextRequest) {
   try {
     // Авторизація
@@ -115,6 +125,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Використовуємо дефолтний промпт якщо не вказано інший
+    const effectiveSystemPrompt = systemPrompt || DEFAULT_SYSTEM_PROMPT;
+
     // Streaming response
     if (stream) {
       const generator = generateTextStream({
@@ -123,7 +136,7 @@ export async function POST(request: NextRequest) {
         stream: true,
         temperature,
         maxTokens,
-        systemPrompt,
+        systemPrompt: effectiveSystemPrompt,
       });
 
       // Списуємо токени (оцінка)
@@ -140,7 +153,7 @@ export async function POST(request: NextRequest) {
       stream: false,
       temperature,
       maxTokens,
-      systemPrompt,
+      systemPrompt: effectiveSystemPrompt,
     });
 
     // Зберігаємо відповідь асистента
