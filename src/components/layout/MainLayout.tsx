@@ -15,7 +15,7 @@ export function MainLayout({ children, locale, tokens }: MainLayoutProps) {
       <Sidebar locale={locale} />
       <Header locale={locale} tokens={tokens} />
       <main className="ml-64 pt-16 min-h-screen">
-        <div className="p-6">
+        <div className="p-6 fixed-chat-content">
           {children}
         </div>
       </main>

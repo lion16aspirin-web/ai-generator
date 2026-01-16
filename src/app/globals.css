@@ -127,3 +127,16 @@
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* Фіксація блоку з контентом чату - щоб він не рухався */
+.fixed-chat-content {
+  position: fixed !important;
+  top: 64px !important; /* pt-16 = 64px */
+  left: 256px !important; /* ml-64 = 256px */
+  right: 0 !important;
+  bottom: 0 !important;
+  overflow-y: auto !important;
+  z-index: 10 !important;
+  width: calc(100% - 256px) !important; /* 100% мінус ширина sidebar */
+  height: calc(100vh - 64px) !important; /* 100vh мінус padding-top */
+}
