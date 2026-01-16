@@ -98,11 +98,12 @@ export default function AdminPage({ params }: AdminPageProps) {
 
   return (
     <MainLayout locale={locale}>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
-        </div>
+      <div className="h-full overflow-y-auto">
+        <div className="space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-2xl font-bold text-white">{t('title')}</h1>
+          </div>
 
         {/* Stats */}
         <div className="grid gap-4 md:grid-cols-4">
@@ -266,6 +267,7 @@ export default function AdminPage({ params }: AdminPageProps) {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </MainLayout>
   );
