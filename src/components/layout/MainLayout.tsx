@@ -15,7 +15,7 @@ export function MainLayout({ children, locale, tokens }: MainLayoutProps) {
       <Sidebar locale={locale} />
       <Header locale={locale} tokens={tokens} />
       <main className="fixed top-16 left-64 right-0 bottom-0 overflow-hidden">
-        <div className="p-6 h-full overflow-y-auto">
+        <div className="p-6 h-full overflow-hidden">
           {children}
         </div>
       </main>

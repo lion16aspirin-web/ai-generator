@@ -40,7 +40,7 @@ export default function ChatPage({ params }: ChatPageProps) {
         }
         path={`/${locale}/chat`}
       />
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-full">
         <ChatSidebar
           selectedChatId={selectedChatId}
           onSelectChat={handleSelectChat}
@@ -49,7 +49,7 @@ export default function ChatPage({ params }: ChatPageProps) {
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
 
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 h-full">
           <ChatInterface
             key={chatKey}
             initialModel="gpt-4o"
