@@ -16,11 +16,13 @@ interface ChatState {
   error: string | null;
   currentModel: string;
   currentChatId: string | null;
+  enableWebSearch: boolean;
 }
 
 interface SendMessageOptions {
   stream?: boolean;
   images?: string[];
+  enableWebSearch?: boolean;
 }
 
 interface UseChatReturn extends ChatState {
@@ -40,6 +42,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
     error: null,
     currentModel: initialModel,
     currentChatId: chatId || null,
+    enableWebSearch: true, // За замовчуванням увімкнено
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -100,8 +103,13 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
     content: string, 
     options: SendMessageOptions = {}
   ) => {
-    const { stream = true, images } = options;
+    const { stream = true, images, enableWebSearch = state.enableWebSearch } = options;
     const modelToUse = currentModelRef.current;
+    
+    // Оновлюємо стан enableWebSearch якщо змінився
+    if (enableWebSearch !== state.enableWebSearch) {
+      setState(prev => ({ ...prev, enableWebSearch }));
+    }
 
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
@@ -134,6 +142,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
           messages: messagesRef.current,
           stream,
           chatId: chatIdRef.current,
+          enableWebSearch: options.enableWebSearch !== false, // За замовчуванням true
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -314,6 +323,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
           messages: updatedMessages,
           stream: true,
           chatId: chatIdRef.current,
+          enableWebSearch: state.enableWebSearch,
         }),
         signal: abortControllerRef.current.signal,
       });
@@ -364,6 +374,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
 
     await sendMessage(lastUserMessage.content, {
       images: lastUserMessage.images,
+      enableWebSearch: state.enableWebSearch,
     });
   }, [state.messages, sendMessage]);
 

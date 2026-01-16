@@ -55,6 +55,10 @@ export class OpenRouterProvider {
         temperature: request.temperature ?? 0.7,
         max_tokens: request.maxTokens ?? 4096,
         stream: false,
+        ...(request.tools && request.tools.length > 0 && {
+          tools: request.tools,
+          tool_choice: request.toolChoice || 'auto',
+        }),
       }),
     });
 
@@ -82,6 +86,10 @@ export class OpenRouterProvider {
         temperature: request.temperature ?? 0.7,
         max_tokens: request.maxTokens ?? 4096,
         stream: true,
+        ...(request.tools && request.tools.length > 0 && {
+          tools: request.tools,
+          tool_choice: request.toolChoice || 'auto',
+        }),
       }),
     });
 
@@ -210,7 +218,9 @@ export class OpenRouterProvider {
    * Форматування відповіді
    */
   private formatResponse(data: any, modelId: string): ChatResponse {
-    const content = data.choices?.[0]?.message?.content || '';
+    const message = data.choices?.[0]?.message || {};
+    const content = message.content || '';
+    const toolCalls = message.tool_calls || [];
     const usage = data.usage || { prompt_tokens: 0, completion_tokens: 0 };
 
     const tokenUsage = calculateTextCost(
@@ -219,12 +229,19 @@ export class OpenRouterProvider {
       usage.completion_tokens
     );
 
+    // Якщо є tool calls, додаємо інформацію про них в content
+    let finalContent = content;
+    if (toolCalls.length > 0) {
+      finalContent += `\n\n[Викликано ${toolCalls.length} інструментів для пошуку актуальної інформації]`;
+    }
+
     return {
       id: data.id || crypto.randomUUID(),
-      content,
+      content: finalContent,
       model: modelId,
       usage: tokenUsage,
       finishReason: data.choices?.[0]?.finish_reason === 'stop' ? 'stop' : 'length',
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
     };
   }
 

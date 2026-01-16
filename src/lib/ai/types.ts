@@ -52,6 +52,37 @@ export interface ChatRequest {
   temperature?: number;
   maxTokens?: number;
   systemPrompt?: string;
+  tools?: Tool[];
+  toolChoice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+}
+
+export interface Tool {
+  type: 'function';
+  function: {
+    name: string;
+    description: string;
+    parameters: {
+      type: 'object';
+      properties: Record<string, any>;
+      required?: string[];
+    };
+  };
+}
+
+export interface ToolCall {
+  id: string;
+  type: 'function';
+  function: {
+    name: string;
+    arguments: string; // JSON string
+  };
+}
+
+export interface ToolResponse {
+  toolCallId: string;
+  role: 'tool';
+  name: string;
+  content: string;
 }
 
 export interface ChatResponse {
@@ -61,6 +92,7 @@ export interface ChatResponse {
   usage: TokenUsage;
   finishReason: 'stop' | 'length' | 'error';
   chatId?: string;
+  toolCalls?: ToolCall[];
 }
 
 export interface StreamChunk {

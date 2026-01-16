@@ -39,7 +39,8 @@ export type ServiceType =
   | 'midjourney'
   | 'stable-diffusion'
   | 'kandinsky'
-  | 'dalle';
+  | 'dalle'
+  | 'serper';
 
 export async function getApiKey(service: ServiceType): Promise<string | null> {
   // First try to get from database (admin keys)
@@ -71,6 +72,7 @@ export async function getApiKey(service: ServiceType): Promise<string | null> {
     'stable-diffusion': process.env.REPLICATE_API_TOKEN,
     'kandinsky': process.env.KANDINSKY_API_KEY,
     'dalle': process.env.OPENAI_API_KEY,
+    'serper': process.env.SERPER_API_KEY,
   };
 
   return envMap[service] || null;
@@ -154,6 +156,17 @@ export async function testApiKey(service: ServiceType, key: string): Promise<boo
           headers: { 'Authorization': `Token ${key}` }
         });
         return replicateRes.ok;
+
+      case 'serper':
+        const serperRes = await fetch('https://google.serper.dev/search', {
+          method: 'POST',
+          headers: {
+            'X-API-KEY': key,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ q: 'test' })
+        });
+        return serperRes.ok;
 
       default:
         return true;

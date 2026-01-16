@@ -127,30 +127,3 @@
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
-
-/* Фіксація блоку з контентом чату - щоб він не рухався */
-main.ml-64.pt-16.min-h-screen {
-  position: fixed !important;
-  top: 0 !important;
-  left: 256px !important; /* ml-64 = 256px */
-  right: 0 !important;
-  bottom: 0 !important;
-  width: calc(100% - 256px) !important;
-  height: 100vh !important;
-  overflow: hidden !important;
-  z-index: 10 !important;
-}
-
-main.ml-64.pt-16.min-h-screen > div.p-6.fixed-chat-content,
-main.ml-64.pt-16.min-h-screen > div.p-6 {
-  position: absolute !important;
-  top: 64px !important; /* pt-16 = 64px */
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  width: 100% !important;
-  height: calc(100vh - 64px) !important;
-  z-index: 1 !important;
-}

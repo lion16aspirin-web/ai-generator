@@ -43,6 +43,7 @@ export function ChatInterface({
   const [notification, setNotification] = useState<string | null>(null);
   const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const previousModelRef = useRef<string>(currentModel);
+  const [enableWebSearch, setEnableWebSearch] = useState<boolean>(true);
 
   // Гарячі клавіші
   useChatShortcuts({
@@ -103,6 +104,20 @@ export function ChatInterface({
             disabled={isLoading || isStreaming}
           />
           
+          {/* Web Search Toggle */}
+          <button
+            onClick={() => setEnableWebSearch(!enableWebSearch)}
+            disabled={isLoading || isStreaming}
+            className={`px-2 py-1 text-xs rounded transition-colors border ${
+              enableWebSearch
+                ? 'bg-blue-900/20 border-blue-800/50 text-blue-400 hover:bg-blue-900/30'
+                : 'bg-slate-900 border-slate-800 text-slate-500 hover:bg-slate-800'
+            }`}
+            title={enableWebSearch ? 'Веб-пошук увімкнено' : 'Веб-пошук вимкнено'}
+          >
+            🔍 {enableWebSearch ? 'ON' : 'OFF'}
+          </button>
+          
           {(isLoading || isStreaming) && (
             <button
               onClick={stop}
@@ -150,9 +165,9 @@ export function ChatInterface({
       <div className="flex-shrink-0">
         <MessageInput
         ref={inputRef}
-        onSend={(content, images) => sendMessage(content, { images })}
+        onSend={(content, images) => sendMessage(content, { images, enableWebSearch })}
         disabled={isLoading || isStreaming || available < 10}
-          placeholder={available < 10 ? 'No tokens...' : 'Message...'}
+          placeholder={available < 10 ? 'No tokens...' : enableWebSearch ? 'Message (web search enabled)...' : 'Message...'}
         />
       </div>
     </div>

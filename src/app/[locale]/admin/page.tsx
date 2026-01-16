@@ -46,6 +46,7 @@ const SERVICES = [
   { value: 'pixverse', label: 'PixVerse' },
   { value: 'minimax', label: 'Minimax' },
   { value: 'midjourney', label: 'Midjourney' },
+  { value: 'serper', label: 'Serper (Web Search)' },
 ];
 
 export default function AdminPage({ params }: AdminPageProps) {
