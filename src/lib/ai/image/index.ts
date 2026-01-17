@@ -155,7 +155,26 @@ async function generateReplicateImage(
   });
 
   if (!createResponse.ok) {
-    throw new AIError('Failed to create Replicate prediction', 'PROVIDER_ERROR', 'replicate');
+    let errorMessage = 'Failed to create Replicate prediction';
+    try {
+      const errorData = await createResponse.json();
+      if (errorData.detail) {
+        // Replicate повертає помилки в форматі { detail: string } або { detail: [...messages] }
+        if (Array.isArray(errorData.detail)) {
+          errorMessage = errorData.detail.map((d: any) => d.msg || d).join(', ');
+        } else if (typeof errorData.detail === 'string') {
+          errorMessage = errorData.detail;
+        } else {
+          errorMessage = JSON.stringify(errorData.detail);
+        }
+      } else if (errorData.error || errorData.message) {
+        errorMessage = errorData.error || errorData.message;
+      }
+    } catch {
+      // Якщо не вдалося парсити JSON, використовуємо текст відповіді
+      errorMessage = `HTTP ${createResponse.status}: ${createResponse.statusText}`;
+    }
+    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'replicate', createResponse.status);
   }
 
   const prediction = await createResponse.json();
