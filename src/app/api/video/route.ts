@@ -8,7 +8,7 @@ import { auth } from '@/auth';
 import { createVideoJob } from '@/lib/ai/video';
 import { calculateVideoCost } from '@/lib/ai/pricing';
 import { deductTokens, getUserTokens, addTokens } from '@/lib/utils/tokens';
-import { AIError, VideoMode, VideoResolution } from '@/lib/ai/types';
+import { AIError, VideoMode, VideoResolution, TokenUsage } from '@/lib/ai/types';
 import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
@@ -172,10 +172,12 @@ export async function POST(request: NextRequest) {
     console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
 
     // Повертаємо токени при помилці генерації (якщо вони були списані)
-    if (tokensDeducted && estimatedCost && userId && model) {
+    if (tokensDeducted && estimatedCost !== null && userId && model) {
       try {
-        await addTokens(userId, estimatedCost.platformTokens, `refund:video:${model}:error`);
-        console.log(`Refunded ${estimatedCost.platformTokens} tokens to user ${userId} due to generation error`);
+        // Type assertion - estimatedCost не може бути null тут
+        const cost = estimatedCost as TokenUsage;
+        await addTokens(userId, cost.platformTokens, `refund:video:${model}:error`);
+        console.log(`Refunded ${cost.platformTokens} tokens to user ${userId} due to generation error`);
       } catch (refundError) {
         console.error('Failed to refund tokens:', refundError);
         // Логуємо помилку, але продовжуємо обробку основної помилки
