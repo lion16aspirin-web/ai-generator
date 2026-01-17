@@ -334,11 +334,25 @@ async function generateRecraftImage(
     throw new AIError('Recraft API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'recraft');
   }
 
+  // Recraft API - маппінг стилів
+  // Recraft підтримує: realistic_image, digital_illustration, vector, icon
+  const recraftStyleMap: Record<string, string> = {
+    'realistic': 'realistic_image',
+    'realistic_image': 'realistic_image',
+    'digital_illustration': 'digital_illustration',
+    'vector': 'vector',
+    'icon': 'icon',
+    'vivid': 'realistic_image', // fallback
+    'natural': 'realistic_image', // fallback
+  };
+
+  const recraftStyle = recraftStyleMap[request.style || 'realistic'] || 'realistic_image';
+
   // Recraft API - мінімальний формат запиту згідно документації
   const requestBody: any = {
     prompt: request.prompt,
     model: 'recraftv3',
-    style: request.style || 'realistic_image',
+    style: recraftStyle,
   };
 
   // Додаємо розмір якщо вказано (Recraft може приймати як width/height так і size)
