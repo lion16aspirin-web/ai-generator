@@ -70,45 +70,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Розрахунок вартості
-    const estimatedCost = calculateVideoCost(model, duration);
+    // Перевірка чи модель існує
+    try {
+      const estimatedCost = calculateVideoCost(model, duration);
+      
+      // Перевірка балансу
+      const userTokens = await getUserTokens(userId);
+      if (userTokens.available < estimatedCost.platformTokens) {
+        return NextResponse.json(
+          { 
+            error: 'Insufficient Tokens', 
+            message: 'Недостатньо токенів',
+            required: estimatedCost.platformTokens,
+            available: userTokens.available,
+          },
+          { status: 402 }
+        );
+      }
 
-    // Перевірка балансу
-    const userTokens = await getUserTokens(userId);
-    if (userTokens.available < estimatedCost.platformTokens) {
-      return NextResponse.json(
-        { 
-          error: 'Insufficient Tokens', 
-          message: 'Недостатньо токенів',
-          required: estimatedCost.platformTokens,
-          available: userTokens.available,
-        },
-        { status: 402 }
-      );
+      // Списуємо токени перед генерацією
+      await deductTokens(userId, estimatedCost.platformTokens, `video:${model}`);
+
+      // Створюємо job
+      const job = await createVideoJob({
+        model,
+        prompt,
+        mode,
+        duration,
+        resolution,
+        sourceImage,
+        sourceVideo,
+      });
+
+      return NextResponse.json({
+        ...job,
+        provider: getProviderFromModel(model),
+        estimatedTime: getEstimatedTime(model, duration),
+      });
+    } catch (costError) {
+      // Якщо помилка в розрахунку вартості (модель не знайдена)
+      if (costError instanceof Error && costError.message.includes('not found')) {
+        return NextResponse.json(
+          { 
+            error: 'Bad Request', 
+            message: `Модель ${model} не знайдена або недоступна`,
+          },
+          { status: 400 }
+        );
+      }
+      throw costError; // Інші помилки прокидаємо далі
     }
 
-    // Списуємо токени перед генерацією
-    await deductTokens(userId, estimatedCost.platformTokens, `video:${model}`);
-
-    // Створюємо job
-    const job = await createVideoJob({
-      model,
-      prompt,
-      mode,
-      duration,
-      resolution,
-      sourceImage,
-      sourceVideo,
-    });
-
-    // Зберігаємо інфо про job для polling
-    // TODO: Зберегти в базу даних для відновлення статусу
-
-    return NextResponse.json({
-      ...job,
-      provider: getProviderFromModel(model),
-      estimatedTime: getEstimatedTime(model, duration),
-    });
 
   } catch (error) {
     console.error('Video API error:', error);

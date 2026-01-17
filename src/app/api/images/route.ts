@@ -62,38 +62,52 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Розрахунок вартості
-    const estimatedCost = calculateImageCost(model, n, quality === 'hd');
+    // Перевірка чи модель існує та розрахунок вартості
+    try {
+      const estimatedCost = calculateImageCost(model, n, quality === 'hd');
 
-    // Перевірка балансу
-    const userTokens = await getUserTokens(userId);
-    if (userTokens.available < estimatedCost.platformTokens) {
-      return NextResponse.json(
-        { 
-          error: 'Insufficient Tokens', 
-          message: 'Недостатньо токенів',
-          required: estimatedCost.platformTokens,
-          available: userTokens.available,
-        },
-        { status: 402 }
-      );
+      // Перевірка балансу
+      const userTokens = await getUserTokens(userId);
+      if (userTokens.available < estimatedCost.platformTokens) {
+        return NextResponse.json(
+          { 
+            error: 'Insufficient Tokens', 
+            message: 'Недостатньо токенів',
+            required: estimatedCost.platformTokens,
+            available: userTokens.available,
+          },
+          { status: 402 }
+        );
+      }
+
+      // Списуємо токени перед генерацією
+      await deductTokens(userId, estimatedCost.platformTokens, `image:${model}`);
+
+      // Генерація
+      const response = await generateImage({
+        model,
+        prompt,
+        negativePrompt,
+        size,
+        style,
+        n,
+        quality,
+      });
+
+      return NextResponse.json(response);
+    } catch (costError) {
+      // Якщо помилка в розрахунку вартості (модель не знайдена)
+      if (costError instanceof Error && costError.message.includes('not found')) {
+        return NextResponse.json(
+          { 
+            error: 'Bad Request', 
+            message: `Модель ${model} не знайдена або недоступна`,
+          },
+          { status: 400 }
+        );
+      }
+      throw costError; // Інші помилки прокидаємо далі
     }
-
-    // Списуємо токени перед генерацією
-    await deductTokens(userId, estimatedCost.platformTokens, `image:${model}`);
-
-    // Генерація
-    const response = await generateImage({
-      model,
-      prompt,
-      negativePrompt,
-      size,
-      style,
-      n,
-      quality,
-    });
-
-    return NextResponse.json(response);
 
   } catch (error) {
     console.error('Images API error:', error);
