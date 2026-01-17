@@ -37,7 +37,17 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
 
     // Парсинг body
-    const body: VideoRequestBody = await request.json();
+    let body: VideoRequestBody;
+    try {
+      body = await request.json();
+    } catch (error) {
+      console.error('Video API: Failed to parse request body:', error);
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Невірний формат запиту' },
+        { status: 400 }
+      );
+    }
+
     const { 
       model, 
       prompt, 
@@ -47,6 +57,8 @@ export async function POST(request: NextRequest) {
       sourceImage,
       sourceVideo,
     } = body;
+
+    console.log('Video API Request:', { model, prompt: prompt?.substring(0, 50), mode, duration, resolution });
 
     // Валідація
     if (!model) {

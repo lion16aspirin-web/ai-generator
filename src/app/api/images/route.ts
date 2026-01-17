@@ -37,8 +37,20 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id;
 
     // Парсинг body
-    const body: ImageRequestBody = await request.json();
+    let body: ImageRequestBody;
+    try {
+      body = await request.json();
+    } catch (error) {
+      console.error('Images API: Failed to parse request body:', error);
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Невірний формат запиту' },
+        { status: 400 }
+      );
+    }
+
     const { model, prompt, negativePrompt, size, style, n = 1, quality = 'standard' } = body;
+
+    console.log('Images API Request:', { model, prompt: prompt?.substring(0, 50), size, style, n, quality });
 
     // Валідація
     if (!model) {
