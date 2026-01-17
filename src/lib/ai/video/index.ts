@@ -161,9 +161,13 @@ async function checkSoraJob(jobId: string): Promise<VideoJob> {
 // ============================================
 
 async function createVeoJob(request: VideoRequest): Promise<VideoJob> {
-  const apiKey = await getApiKey('veo');
+  // Спочатку пробуємо veo ключ, якщо немає - fallback на google
+  let apiKey = await getApiKey('veo');
   if (!apiKey) {
-    throw new AIError('Google AI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'google');
+    apiKey = await getApiKey('google');
+  }
+  if (!apiKey) {
+    throw new AIError('Google AI API key not configured. Add it in admin panel (veo or google).', 'UNAUTHORIZED', 'google');
   }
 
   // Google Veo API
@@ -182,7 +186,18 @@ async function createVeoJob(request: VideoRequest): Promise<VideoJob> {
   );
 
   if (!response.ok) {
-    throw new AIError('Veo generation failed', 'PROVIDER_ERROR', 'google');
+    let errorMessage = 'Veo generation failed';
+    try {
+      const errorData = await response.json();
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'google', response.status);
   }
 
   const data = await response.json();
@@ -196,9 +211,13 @@ async function createVeoJob(request: VideoRequest): Promise<VideoJob> {
 }
 
 async function checkVeoJob(jobId: string): Promise<VideoJob> {
-  const apiKey = await getApiKey('veo');
+  // Спочатку пробуємо veo ключ, якщо немає - fallback на google
+  let apiKey = await getApiKey('veo');
   if (!apiKey) {
-    throw new AIError('Google AI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'google');
+    apiKey = await getApiKey('google');
+  }
+  if (!apiKey) {
+    throw new AIError('Google AI API key not configured. Add it in admin panel (veo or google).', 'UNAUTHORIZED', 'google');
   }
 
   const response = await fetch(
@@ -206,7 +225,18 @@ async function checkVeoJob(jobId: string): Promise<VideoJob> {
   );
 
   if (!response.ok) {
-    throw new AIError('Failed to check Veo job', 'PROVIDER_ERROR', 'google');
+    let errorMessage = 'Failed to check Veo job';
+    try {
+      const errorData = await response.json();
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'google', response.status);
   }
 
   const data = await response.json();
