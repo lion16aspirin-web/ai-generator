@@ -54,7 +54,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    ({ model, prompt, negativePrompt, size, style, n = 1, quality = 'standard' } = body);
+    // Деструктуризація (використовуємо окремі змінні щоб уникнути конфлікту з глобальною функцією prompt)
+    model = body.model;
+    const prompt = body.prompt;
+    const negativePrompt = body.negativePrompt;
+    const size = body.size;
+    const style = body.style;
+    const n = body.n || 1;
+    const quality = body.quality || 'standard';
 
     console.log('Images API Request:', { model, prompt: prompt?.substring(0, 50), size, style, n, quality });
 
