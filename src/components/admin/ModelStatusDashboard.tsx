@@ -97,7 +97,7 @@ const API_KEY_LINKS: Record<string, { url: string; label: string }> = {
   kandinsky: { url: 'https://kandinsky.ai/api', label: 'Kandinsky API' },
   serper: { url: 'https://serper.dev/api-key', label: 'Serper API Key' },
   deepseek: { url: 'https://platform.deepseek.com/api_keys', label: 'DeepSeek API Keys' },
-  xai: { url: 'https://x.ai/api', label: 'xAI API' },
+  xai: { url: 'https://console.x.ai/api-keys', label: 'xAI Console' },
   moonshot: { url: 'https://platform.moonshot.cn/api-keys', label: 'Moonshot API Keys' },
 };
 
