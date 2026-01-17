@@ -14,7 +14,8 @@ import {
   Image as ImageIcon,
   Video,
   Sparkles,
-  Activity
+  Activity,
+  ExternalLink
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,33 @@ const STATUS_COLORS = {
   disconnected: 'text-slate-400 bg-slate-500/10 border-slate-500/20',
   testing: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   error: 'text-red-400 bg-red-500/10 border-red-500/20',
+};
+
+// Посилання на отримання API ключів
+const API_KEY_LINKS: Record<string, { url: string; label: string }> = {
+  openai: { url: 'https://platform.openai.com/api-keys', label: 'OpenAI API Keys' },
+  anthropic: { url: 'https://console.anthropic.com/settings/keys', label: 'Anthropic Console' },
+  google: { url: 'https://makersuite.google.com/app/apikey', label: 'Google AI Studio' },
+  replicate: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  dalle: { url: 'https://platform.openai.com/api-keys', label: 'OpenAI API Keys' },
+  sora: { url: 'https://platform.openai.com/api-keys', label: 'OpenAI API Keys' },
+  veo: { url: 'https://makersuite.google.com/app/apikey', label: 'Google AI Studio' },
+  ideogram: { url: 'https://ideogram.ai/api', label: 'Ideogram API' },
+  recraft: { url: 'https://recraft.ai/api', label: 'Recraft API' },
+  runway: { url: 'https://runwayml.com/api', label: 'Runway API' },
+  luma: { url: 'https://lumalabs.ai/api', label: 'Luma API' },
+  kling: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  pixverse: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  minimax: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  wan: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  flux: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  midjourney: { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  'stable-diffusion': { url: 'https://replicate.com/account/api-tokens', label: 'Replicate API Tokens' },
+  kandinsky: { url: 'https://kandinsky.ai/api', label: 'Kandinsky API' },
+  serper: { url: 'https://serper.dev/api-key', label: 'Serper API Key' },
+  deepseek: { url: 'https://platform.deepseek.com/api_keys', label: 'DeepSeek API Keys' },
+  xai: { url: 'https://x.ai/api', label: 'xAI API' },
+  moonshot: { url: 'https://platform.moonshot.cn/api-keys', label: 'Moonshot API Keys' },
 };
 
 export function ModelStatusDashboard() {
@@ -261,6 +289,7 @@ export function ModelStatusDashboard() {
             const TypeIcon = TYPE_ICONS[model.type];
             const typeColor = TYPE_COLORS[model.type];
             const statusColor = STATUS_COLORS[model.status];
+            const apiLink = API_KEY_LINKS[model.provider.toLowerCase()];
 
             return (
               <div
@@ -272,7 +301,7 @@ export function ModelStatusDashboard() {
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-white">{model.name}</p>
                     <span className="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300 capitalize">
                       {model.provider}
@@ -283,6 +312,24 @@ export function ModelStatusDashboard() {
                   </div>
                   {model.error && (
                     <p className="text-xs text-red-400 mt-1">{model.error}</p>
+                  )}
+                  {apiLink && (
+                    <a
+                      href={apiLink.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`inline-flex items-center gap-1 text-xs mt-2 transition-colors ${
+                        model.status === 'disconnected' || model.status === 'error'
+                          ? 'text-violet-400 hover:text-violet-300 font-medium'
+                          : 'text-slate-400 hover:text-slate-300'
+                      }`}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      {model.status === 'disconnected' || model.status === 'error'
+                        ? `Отримати API ключ: ${apiLink.label}`
+                        : `API ключ: ${apiLink.label}`
+                      }
+                    </a>
                   )}
                 </div>
 
