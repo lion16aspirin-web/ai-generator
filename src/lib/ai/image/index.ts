@@ -312,24 +312,28 @@ async function generateRecraftImage(
     throw new AIError('Recraft API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'recraft');
   }
 
-  // Recraft API - правильний формат запиту
+  // Recraft API - мінімальний формат запиту згідно документації
   const requestBody: any = {
     prompt: request.prompt,
-    model: 'recraftv3', // Recraft використовує 'recraftv3' або 'recraftv2'
+    model: 'recraftv3',
     style: request.style || 'realistic_image',
-    num_outputs: request.n || 1,
   };
 
-  // Додаємо size якщо вказано (Recraft приймає width/height)
+  // Додаємо розмір якщо вказано (Recraft може приймати як width/height так і size)
   if (request.size) {
     const [width, height] = request.size.split('x').map(Number);
+    // Спробуємо обидва формати
     requestBody.width = width;
     requestBody.height = height;
-  } else {
-    // За замовчуванням 1024x1024
-    requestBody.width = 1024;
-    requestBody.height = 1024;
+    // Альтернативно: requestBody.size = request.size;
   }
+
+  // Додаємо num_outputs тільки якщо більше 1
+  if (request.n && request.n > 1) {
+    requestBody.num_outputs = request.n;
+  }
+
+  console.log('Recraft API Request:', JSON.stringify(requestBody, null, 2));
 
   const response = await fetch('https://external.api.recraft.ai/v1/images/generations', {
     method: 'POST',
@@ -340,20 +344,62 @@ async function generateRecraftImage(
     body: JSON.stringify(requestBody),
   });
 
+  console.log('Recraft API Response Status:', response.status, response.statusText);
+
   if (!response.ok) {
     let errorMessage = 'Recraft generation failed';
+    let errorData: any = null;
+    
     try {
-      const errorData = await response.json();
-      if (errorData.detail || errorData.error || errorData.message) {
-        errorMessage = errorData.detail || errorData.error || errorData.message;
+      const responseText = await response.text();
+      console.error('Recraft API Error Response:', responseText);
+      
+      try {
+        errorData = JSON.parse(responseText);
+      } catch {
+        errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`;
       }
-    } catch {
+      
+      if (errorData) {
+        if (errorData.detail) {
+          errorMessage = Array.isArray(errorData.detail) 
+            ? errorData.detail.map((d: any) => d.msg || d).join(', ')
+            : errorData.detail;
+        } else if (errorData.error) {
+          errorMessage = typeof errorData.error === 'string' 
+            ? errorData.error 
+            : errorData.error.message || JSON.stringify(errorData.error);
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else {
+          errorMessage = JSON.stringify(errorData);
+        }
+      }
+    } catch (err) {
+      console.error('Error parsing Recraft error response:', err);
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     }
+    
     throw new AIError(errorMessage, 'PROVIDER_ERROR', 'recraft', response.status);
   }
 
-  const data = await response.json();
+  const responseText = await response.text();
+  console.log('Recraft API Success Response:', responseText.substring(0, 500));
+  
+  let data: any;
+  try {
+    data = JSON.parse(responseText);
+  } catch (err) {
+    console.error('Error parsing Recraft response:', err);
+    throw new AIError(
+      'Recraft API returned invalid JSON response',
+      'PROVIDER_ERROR',
+      'recraft'
+    );
+  }
+  
+  console.log('Recraft API Parsed Data:', JSON.stringify(data, null, 2));
+  
   const usage = calculateImageCost(modelId, request.n || 1);
 
   // Recraft може повертати результат в різних форматах
