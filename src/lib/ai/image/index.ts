@@ -356,9 +356,40 @@ async function generateRecraftImage(
   const data = await response.json();
   const usage = calculateImageCost(modelId, request.n || 1);
 
+  // Recraft може повертати результат в різних форматах
+  let images: Array<{ url: string }> = [];
+  
+  if (data.data && Array.isArray(data.data)) {
+    // Стандартний формат: { data: [{ url: ... }] }
+    images = data.data.map((item: any) => ({ 
+      url: item.url || item.image_url || item 
+    }));
+  } else if (data.images && Array.isArray(data.images)) {
+    // Альтернативний формат: { images: [{ url: ... }] }
+    images = data.images.map((item: any) => ({ 
+      url: item.url || item.image_url || item 
+    }));
+  } else if (data.url) {
+    // Одиночне зображення: { url: ... }
+    images = [{ url: data.url }];
+  } else if (Array.isArray(data)) {
+    // Масив URL: [url1, url2, ...]
+    images = data.map((url: string) => ({ url }));
+  }
+
+  if (images.length === 0) {
+    // Якщо не вдалося розпарсити відповідь, показуємо детальну помилку
+    console.error('Recraft API response:', JSON.stringify(data, null, 2));
+    throw new AIError(
+      `Recraft API returned no images. Response format: ${JSON.stringify(Object.keys(data))}`,
+      'PROVIDER_ERROR',
+      'recraft'
+    );
+  }
+
   return {
-    id: crypto.randomUUID(),
-    images: data.data.map((item: any) => ({ url: item.url })),
+    id: data.id || crypto.randomUUID(),
+    images,
     model: modelId,
     usage,
   };
