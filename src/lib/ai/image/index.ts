@@ -6,7 +6,8 @@ import {
   ImageRequest, 
   ImageResponse, 
   GeneratedImage,
-  AIError 
+  AIError,
+  AIErrorCode
 } from '../types';
 import { getImageModel, IMAGE_MODELS } from '../config';
 import { calculateImageCost } from '../pricing';
@@ -113,17 +114,52 @@ async function generateOpenAIImage(
 
   if (!response.ok) {
     let errorMessage = 'OpenAI image generation failed';
+    let errorCode: AIErrorCode = 'PROVIDER_ERROR';
+    
     try {
       const errorData = await response.json();
+      console.error('OpenAI API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        modelId,
+        promptLength: request.prompt?.length,
+      });
+      
       if (errorData.error?.message) {
         errorMessage = errorData.error.message;
       } else if (errorData.message) {
         errorMessage = errorData.message;
       }
-    } catch {
+      
+      // Маппінг специфічних помилок OpenAI
+      if (errorData.error?.type === 'insufficient_quota' || errorData.error?.code === 'insufficient_quota') {
+        errorCode = 'INSUFFICIENT_TOKENS';
+        errorMessage = 'Недостатньо квоти в OpenAI. Перевірте баланс API ключа.';
+      } else if (errorData.error?.type === 'rate_limit_exceeded' || errorData.error?.code === 'rate_limit_exceeded') {
+        errorCode = 'RATE_LIMITED';
+        errorMessage = 'Перевищено ліміт запитів до OpenAI. Спробуйте пізніше.';
+      } else if (errorData.error?.type === 'content_policy_violation' || response.status === 400) {
+        errorCode = 'CONTENT_FILTERED';
+        errorMessage = errorMessage || 'Контент не пройшов перевірку політики OpenAI.';
+      }
+    } catch (parseError) {
+      console.error('OpenAI API Error - Failed to parse error response:', parseError);
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     }
-    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'openai', response.status);
+    
+    // Маппінг статусів на коди помилок
+    if (errorCode === 'PROVIDER_ERROR') {
+      if (response.status === 401 || response.status === 403) {
+        errorCode = 'UNAUTHORIZED';
+      } else if (response.status === 402 || response.status === 429) {
+        errorCode = response.status === 402 ? 'INSUFFICIENT_TOKENS' : 'RATE_LIMITED';
+      } else if (response.status === 400 || response.status === 422) {
+        errorCode = 'INVALID_REQUEST';
+      }
+    }
+    
+    throw new AIError(errorMessage, errorCode, 'openai', response.status);
   }
 
   const data = await response.json();
@@ -187,8 +223,18 @@ async function generateReplicateImage(
 
   if (!createResponse.ok) {
     let errorMessage = 'Failed to create Replicate prediction';
+    let errorCode: AIErrorCode = 'PROVIDER_ERROR';
+    
     try {
       const errorData = await createResponse.json();
+      console.error('Replicate API Error:', {
+        status: createResponse.status,
+        statusText: createResponse.statusText,
+        errorData,
+        modelId,
+        promptLength: request.prompt?.length,
+      });
+      
       if (errorData.detail) {
         // Replicate повертає помилки в форматі { detail: string } або { detail: [...messages] }
         if (Array.isArray(errorData.detail)) {
@@ -201,11 +247,24 @@ async function generateReplicateImage(
       } else if (errorData.error || errorData.message) {
         errorMessage = errorData.error || errorData.message;
       }
-    } catch {
+    } catch (parseError) {
+      console.error('Replicate API Error - Failed to parse error response:', parseError);
       // Якщо не вдалося парсити JSON, використовуємо текст відповіді
       errorMessage = `HTTP ${createResponse.status}: ${createResponse.statusText}`;
     }
-    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'replicate', createResponse.status);
+    
+    // Маппінг статусів на коди помилок
+    if (errorCode === 'PROVIDER_ERROR') {
+      if (createResponse.status === 401 || createResponse.status === 403) {
+        errorCode = 'UNAUTHORIZED';
+      } else if (createResponse.status === 402 || createResponse.status === 429) {
+        errorCode = createResponse.status === 402 ? 'INSUFFICIENT_TOKENS' : 'RATE_LIMITED';
+      } else if (createResponse.status === 400 || createResponse.status === 422) {
+        errorCode = 'INVALID_REQUEST';
+      }
+    }
+    
+    throw new AIError(errorMessage, errorCode, 'replicate', createResponse.status);
   }
 
   const prediction = await createResponse.json();
@@ -279,15 +338,38 @@ async function generateIdeogramImage(
 
   if (!response.ok) {
     let errorMessage = 'Ideogram generation failed';
+    let errorCode: AIErrorCode = 'PROVIDER_ERROR';
+    
     try {
       const errorData = await response.json();
+      console.error('Ideogram API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        modelId,
+        promptLength: request.prompt?.length,
+      });
+      
       if (errorData.detail || errorData.error || errorData.message) {
         errorMessage = errorData.detail || errorData.error || errorData.message;
       }
-    } catch {
+    } catch (parseError) {
+      console.error('Ideogram API Error - Failed to parse error response:', parseError);
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     }
-    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'ideogram', response.status);
+    
+    // Маппінг статусів на коди помилок
+    if (errorCode === 'PROVIDER_ERROR') {
+      if (response.status === 401 || response.status === 403) {
+        errorCode = 'UNAUTHORIZED';
+      } else if (response.status === 402 || response.status === 429) {
+        errorCode = response.status === 402 ? 'INSUFFICIENT_TOKENS' : 'RATE_LIMITED';
+      } else if (response.status === 400 || response.status === 422) {
+        errorCode = 'INVALID_REQUEST';
+      }
+    }
+    
+    throw new AIError(errorMessage, errorCode, 'ideogram', response.status);
   }
 
   const data = await response.json();
@@ -384,6 +466,7 @@ async function generateRecraftImage(
 
   if (!response.ok) {
     let errorMessage = 'Recraft generation failed';
+    let errorCode: AIErrorCode = 'PROVIDER_ERROR';
     let errorData: any = null;
     
     try {
@@ -410,13 +493,31 @@ async function generateRecraftImage(
         } else {
           errorMessage = JSON.stringify(errorData);
         }
+        
+        // Специфічні коди помилок Recraft
+        if (errorData.error?.code === 'insufficient_credits' || errorData.error?.type === 'insufficient_credits') {
+          errorCode = 'INSUFFICIENT_TOKENS';
+        } else if (errorData.error?.code === 'rate_limit' || errorData.error?.type === 'rate_limit') {
+          errorCode = 'RATE_LIMITED';
+        }
       }
     } catch (err) {
       console.error('Error parsing Recraft error response:', err);
       errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     }
     
-    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'recraft', response.status);
+    // Маппінг статусів на коди помилок
+    if (errorCode === 'PROVIDER_ERROR') {
+      if (response.status === 401 || response.status === 403) {
+        errorCode = 'UNAUTHORIZED';
+      } else if (response.status === 402 || response.status === 429) {
+        errorCode = response.status === 402 ? 'INSUFFICIENT_TOKENS' : 'RATE_LIMITED';
+      } else if (response.status === 400 || response.status === 422) {
+        errorCode = 'INVALID_REQUEST';
+      }
+    }
+    
+    throw new AIError(errorMessage, errorCode, 'recraft', response.status);
   }
 
   const responseText = await response.text();

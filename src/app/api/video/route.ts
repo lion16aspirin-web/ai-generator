@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { createVideoJob } from '@/lib/ai/video';
 import { calculateVideoCost } from '@/lib/ai/pricing';
-import { deductTokens, getUserTokens } from '@/lib/utils/tokens';
+import { deductTokens, getUserTokens, addTokens } from '@/lib/utils/tokens';
 import { AIError, VideoMode, VideoResolution } from '@/lib/ai/types';
 
 export const runtime = 'nodejs';
@@ -24,6 +24,12 @@ interface VideoRequestBody {
 }
 
 export async function POST(request: NextRequest) {
+  // Змінні для використання в catch блоці
+  let userId: string | undefined;
+  let model: string | undefined;
+  let estimatedCost: ReturnType<typeof calculateVideoCost> | null = null;
+  let tokensDeducted = false;
+
   try {
     // Авторизація
     const session = await auth();
@@ -34,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = session.user.id;
+    userId = session.user.id;
 
     // Парсинг body
     let body: VideoRequestBody;
@@ -48,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { 
+    ({ 
       model, 
       prompt, 
       mode = 'text-to-video', 
@@ -56,7 +62,7 @@ export async function POST(request: NextRequest) {
       resolution = '1080p',
       sourceImage,
       sourceVideo,
-    } = body;
+    } = body);
 
     console.log('Video API Request:', { model, prompt: prompt?.substring(0, 50), mode, duration, resolution });
 
@@ -68,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!prompt || prompt.trim().length === 0) {
+    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       return NextResponse.json(
         { error: 'Bad Request', message: 'Промпт не вказано' },
         { status: 400 }
@@ -84,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     // Перевірка чи модель існує
     try {
-      const estimatedCost = calculateVideoCost(model, duration);
+      estimatedCost = calculateVideoCost(model, duration);
       
       // Перевірка балансу
       const userTokens = await getUserTokens(userId);
@@ -101,7 +107,17 @@ export async function POST(request: NextRequest) {
       }
 
       // Списуємо токени перед генерацією
-      await deductTokens(userId, estimatedCost.platformTokens, `video:${model}`);
+      const deducted = await deductTokens(userId, estimatedCost.platformTokens, `video:${model}`);
+      if (!deducted) {
+        return NextResponse.json(
+          { 
+            error: 'Insufficient Tokens', 
+            message: 'Недостатньо токенів для генерації',
+          },
+          { status: 402 }
+        );
+      }
+      tokensDeducted = true;
 
       // Створюємо job
       const job = await createVideoJob({
@@ -133,23 +149,88 @@ export async function POST(request: NextRequest) {
       throw costError; // Інші помилки прокидаємо далі
     }
 
-
   } catch (error) {
     console.error('Video API error:', error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+
+    // Повертаємо токени при помилці генерації (якщо вони були списані)
+    if (tokensDeducted && estimatedCost && userId && model) {
+      try {
+        await addTokens(userId, estimatedCost.platformTokens, `refund:video:${model}:error`);
+        console.log(`Refunded ${estimatedCost.platformTokens} tokens to user ${userId} due to generation error`);
+      } catch (refundError) {
+        console.error('Failed to refund tokens:', refundError);
+        // Логуємо помилку, але продовжуємо обробку основної помилки
+      }
+    }
 
     if (error instanceof AIError) {
+      // Маппінг кодів помилок на HTTP статуси
+      let httpStatus: number;
+      
+      // Якщо провайдер повернув статус - використовуємо його
+      if (error.statusCode) {
+        httpStatus = error.statusCode;
+      } else {
+        // Інакше маппимо код помилки на HTTP статус
+        switch (error.code) {
+          case 'UNAUTHORIZED':
+            httpStatus = 401;
+            break;
+          case 'INSUFFICIENT_TOKENS':
+            httpStatus = 402;
+            break;
+          case 'INVALID_REQUEST':
+            httpStatus = 400;
+            break;
+          case 'RATE_LIMITED':
+            httpStatus = 429;
+            break;
+          case 'CONTENT_FILTERED':
+            httpStatus = 422;
+            break;
+          case 'MODEL_UNAVAILABLE':
+            httpStatus = 503;
+            break;
+          case 'TIMEOUT':
+            httpStatus = 504;
+            break;
+          case 'PROVIDER_ERROR':
+            httpStatus = 502; // Bad Gateway для помилок провайдера
+            break;
+          default:
+            httpStatus = 500;
+        }
+      }
+
+      // Детальне логування для діагностики
+      console.error('AIError details:', {
+        code: error.code,
+        message: error.message,
+        provider: error.provider,
+        statusCode: error.statusCode,
+        mappedHttpStatus: httpStatus,
+      });
+
       return NextResponse.json(
         { 
           error: error.code, 
           message: error.message,
           provider: error.provider,
         },
-        { status: error.statusCode || 500 }
+        { status: httpStatus }
       );
     }
 
+    // Неочікувані помилки
+    const errorMessage = error instanceof Error ? error.message : 'Невідома помилка';
+    console.error('Unexpected error in Video API:', errorMessage);
+
     return NextResponse.json(
-      { error: 'Internal Error', message: 'Внутрішня помилка сервера' },
+      { 
+        error: 'Internal Error', 
+        message: errorMessage || 'Внутрішня помилка сервера',
+      },
       { status: 500 }
     );
   }

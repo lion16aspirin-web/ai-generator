@@ -30,6 +30,7 @@ export function ChatInterface({
     error,
     currentModel,
     currentChatId,
+    thinkingStatus,
     sendMessage,
     editMessage,
     setModel,
@@ -154,9 +155,10 @@ export function ChatInterface({
             {error}
           </div>
         )}
-        <MessageList 
-          messages={messages} 
+        <MessageList
+          messages={messages}
           isStreaming={isStreaming}
+          thinkingStatus={thinkingStatus}
           onEditMessage={editMessage}
         />
       </div>

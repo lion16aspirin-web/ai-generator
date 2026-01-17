@@ -98,6 +98,8 @@ export interface StreamChunk {
   content: string;
   done: boolean;
   chatId?: string;
+  status?: 'thinking' | 'searching' | 'streaming'; // Статус для індикації що робить модель
+  toolCalls?: ToolCall[]; // Tool calls якщо є
 }
 
 // ============================================

@@ -129,10 +129,24 @@ export class OpenRouterProvider {
 
             try {
               const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content || '';
+              const delta = parsed.choices?.[0]?.delta || {};
+              const content = delta.content || '';
               
-              if (content) {
-                yield { content, done: false };
+              // Перевіряємо чи є tool calls (модель думає/викликає інструменти)
+              const toolCalls = delta.tool_calls || [];
+              const finishReason = parsed.choices?.[0]?.finish_reason;
+              
+              if (toolCalls.length > 0 || finishReason === 'tool_calls') {
+                // Модель викликає інструменти - показуємо статус "thinking"
+                yield { 
+                  content: '', 
+                  done: false, 
+                  status: 'thinking',
+                  toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+                };
+              } else if (content) {
+                // Звичайний контент
+                yield { content, done: false, status: 'streaming' };
               }
             } catch {
               // Ігноруємо невалідний JSON

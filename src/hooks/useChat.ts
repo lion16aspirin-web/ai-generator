@@ -17,6 +17,7 @@ interface ChatState {
   currentModel: string;
   currentChatId: string | null;
   enableWebSearch: boolean;
+  thinkingStatus?: 'thinking' | 'searching' | 'streaming'; // Статус що робить модель
 }
 
 interface SendMessageOptions {
@@ -43,6 +44,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
     currentModel: initialModel,
     currentChatId: chatId || null,
     enableWebSearch: true, // За замовчуванням увімкнено
+    thinkingStatus: undefined,
   });
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -104,7 +106,9 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
     options: SendMessageOptions = {}
   ) => {
     const { stream = true, images, enableWebSearch = state.enableWebSearch } = options;
-    const modelToUse = currentModelRef.current;
+    // Використовуємо актуальну модель зі стану, а не ref (щоб модель оновлювалася на ходу)
+    const modelToUse = state.currentModel;
+    currentModelRef.current = modelToUse; // Оновлюємо ref для синхронізації
     
     // Оновлюємо стан enableWebSearch якщо змінився
     if (enableWebSearch !== state.enableWebSearch) {
@@ -237,7 +241,15 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
         break;
       }
 
-      fullContent += chunk.content;
+      // Оновлюємо статус thinking/searching якщо є
+      if (chunk.status) {
+        setState(prev => ({ ...prev, thinkingStatus: chunk.status }));
+      }
+
+      // Оновлюємо контент якщо є
+      if (chunk.content) {
+        fullContent += chunk.content;
+      }
 
       setState(prev => {
         const updatedMessages = prev.messages.map(msg =>
@@ -249,6 +261,7 @@ export function useChat(initialModel: string = 'gpt-4o', chatId?: string): UseCh
         return {
           ...prev,
           messages: updatedMessages,
+          thinkingStatus: chunk.status || prev.thinkingStatus,
         };
       });
     }

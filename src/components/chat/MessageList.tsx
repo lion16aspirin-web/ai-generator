@@ -15,10 +15,11 @@ import { StreamingMessage } from './StreamingMessage';
 interface MessageListProps {
   messages: ChatMessage[];
   isStreaming: boolean;
+  thinkingStatus?: 'thinking' | 'searching' | 'streaming';
   onEditMessage?: (messageId: string, newContent: string) => Promise<void>;
 }
 
-export function MessageList({ messages, isStreaming, onEditMessage }: MessageListProps) {
+export function MessageList({ messages, isStreaming, thinkingStatus, onEditMessage }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export function MessageList({ messages, isStreaming, onEditMessage }: MessageLis
           key={message.id} 
           message={message}
           isStreaming={isStreaming && index === messages.length - 1 && message.role === 'assistant'}
+          thinkingStatus={isStreaming && index === messages.length - 1 && message.role === 'assistant' ? thinkingStatus : undefined}
           onEdit={onEditMessage}
         />
         ))}
@@ -53,10 +55,11 @@ export function MessageList({ messages, isStreaming, onEditMessage }: MessageLis
 interface MessageItemProps {
   message: ChatMessage;
   isStreaming: boolean;
+  thinkingStatus?: 'thinking' | 'searching' | 'streaming';
   onEdit?: (messageId: string, newContent: string) => Promise<void>;
 }
 
-function MessageItem({ message, isStreaming, onEdit }: MessageItemProps) {
+function MessageItem({ message, isStreaming, thinkingStatus, onEdit }: MessageItemProps) {
   const isUser = message.role === 'user';
   const [isEditing, setIsEditing] = React.useState(false);
   const [editContent, setEditContent] = React.useState(message.content);
@@ -159,7 +162,7 @@ function MessageItem({ message, isStreaming, onEdit }: MessageItemProps) {
             ${!isUser ? 'text-left' : ''}
           `}>
             {isStreaming ? (
-              <StreamingMessage content={message.content} />
+              <StreamingMessage content={message.content} status={thinkingStatus} />
             ) : (
               <MarkdownContent content={message.content} isUser={isUser} />
             )}
