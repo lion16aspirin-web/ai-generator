@@ -8,7 +8,7 @@ import { auth } from '@/auth';
 import { generateImage } from '@/lib/ai/image';
 import { calculateImageCost } from '@/lib/ai/pricing';
 import { deductTokens, getUserTokens, addTokens } from '@/lib/utils/tokens';
-import { AIError, ImageSize } from '@/lib/ai/types';
+import { AIError, ImageSize, TokenUsage } from '@/lib/ai/types';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 хвилини для генерації
@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   // Змінні для використання в catch блоці
   let userId: string | undefined;
   let model: string | undefined;
-  let estimatedCost: ReturnType<typeof calculateImageCost> | null = null;
+  let estimatedCost: TokenUsage | null = null;
   let tokensDeducted = false;
 
   try {
