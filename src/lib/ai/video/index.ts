@@ -77,9 +77,13 @@ export async function checkVideoJob(
 // ============================================
 
 async function createSoraJob(request: VideoRequest): Promise<VideoJob> {
-  const apiKey = await getApiKey('sora');
+  // Спочатку пробуємо sora ключ, якщо немає - fallback на openai
+  let apiKey = await getApiKey('sora');
   if (!apiKey) {
-    throw new AIError('OpenAI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'openai');
+    apiKey = await getApiKey('openai');
+  }
+  if (!apiKey) {
+    throw new AIError('OpenAI API key not configured. Add it in admin panel (sora or openai).', 'UNAUTHORIZED', 'openai');
   }
 
   // Sora API (коли стане доступним)
@@ -118,9 +122,13 @@ async function createSoraJob(request: VideoRequest): Promise<VideoJob> {
 }
 
 async function checkSoraJob(jobId: string): Promise<VideoJob> {
-  const apiKey = await getApiKey('sora');
+  // Спочатку пробуємо sora ключ, якщо немає - fallback на openai
+  let apiKey = await getApiKey('sora');
   if (!apiKey) {
-    throw new AIError('OpenAI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'openai');
+    apiKey = await getApiKey('openai');
+  }
+  if (!apiKey) {
+    throw new AIError('OpenAI API key not configured. Add it in admin panel (sora or openai).', 'UNAUTHORIZED', 'openai');
   }
 
   const response = await fetch(`https://api.openai.com/v1/video/generations/${jobId}`, {

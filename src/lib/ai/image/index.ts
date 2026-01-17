@@ -64,9 +64,13 @@ async function generateOpenAIImage(
   request: ImageRequest, 
   modelId: string
 ): Promise<ImageResponse> {
-  const apiKey = await getApiKey('dalle');
+  // Спочатку пробуємо dalle ключ, якщо немає - fallback на openai
+  let apiKey = await getApiKey('dalle');
   if (!apiKey) {
-    throw new AIError('OpenAI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'openai');
+    apiKey = await getApiKey('openai');
+  }
+  if (!apiKey) {
+    throw new AIError('OpenAI API key not configured. Add it in admin panel (dalle or openai).', 'UNAUTHORIZED', 'openai');
   }
 
   const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -86,13 +90,18 @@ async function generateOpenAIImage(
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new AIError(
-      error.error?.message || 'OpenAI image generation failed',
-      'PROVIDER_ERROR',
-      'openai',
-      response.status
-    );
+    let errorMessage = 'OpenAI image generation failed';
+    try {
+      const errorData = await response.json();
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+    } catch {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'openai', response.status);
   }
 
   const data = await response.json();
@@ -247,7 +256,16 @@ async function generateIdeogramImage(
   });
 
   if (!response.ok) {
-    throw new AIError('Ideogram generation failed', 'PROVIDER_ERROR', 'ideogram');
+    let errorMessage = 'Ideogram generation failed';
+    try {
+      const errorData = await response.json();
+      if (errorData.detail || errorData.error || errorData.message) {
+        errorMessage = errorData.detail || errorData.error || errorData.message;
+      }
+    } catch {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'ideogram', response.status);
   }
 
   const data = await response.json();
@@ -309,7 +327,16 @@ async function generateRecraftImage(
   });
 
   if (!response.ok) {
-    throw new AIError('Recraft generation failed', 'PROVIDER_ERROR', 'recraft');
+    let errorMessage = 'Recraft generation failed';
+    try {
+      const errorData = await response.json();
+      if (errorData.detail || errorData.error || errorData.message) {
+        errorMessage = errorData.detail || errorData.error || errorData.message;
+      }
+    } catch {
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    throw new AIError(errorMessage, 'PROVIDER_ERROR', 'recraft', response.status);
   }
 
   const data = await response.json();
