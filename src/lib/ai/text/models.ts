@@ -33,7 +33,7 @@ export function getModelsByProvider(): ModelGroup[] {
   }
 
   // Сортуємо по пріоритету провайдерів
-  const order = ['openai', 'anthropic', 'google', 'deepseek', 'xai', 'moonshot'];
+  const order = ['openai', 'anthropic', 'google', 'deepseek', 'xai'];
   return order
     .map(p => groups[p])
     .filter(Boolean);
@@ -49,7 +49,6 @@ export function getProviderName(provider: string): string {
     google: 'Google',
     deepseek: 'DeepSeek',
     xai: 'xAI',
-    moonshot: 'Moonshot AI',
   };
   return names[provider] || provider;
 }
@@ -192,7 +191,6 @@ export function getRecommendations(
 
       case 'analysis':
         if (model.id === 'claude-4.5-sonnet') { score = 100; reason = 'Глибокий аналіз документів'; }
-        else if (model.id === 'kimi-k2') { score = 90; reason = 'Величезний контекст'; }
         else if (model.capabilities.includes('reasoning')) { score = 75; reason = 'Reasoning'; }
         else score = 40;
         break;

@@ -98,7 +98,6 @@ const API_KEY_LINKS: Record<string, { url: string; label: string }> = {
   serper: { url: 'https://serper.dev/api-key', label: 'Serper API Key' },
   deepseek: { url: 'https://platform.deepseek.com/api_keys', label: 'DeepSeek API Keys' },
   xai: { url: 'https://console.x.ai/api-keys', label: 'xAI Console' },
-  moonshot: { url: 'https://platform.moonshot.cn/api-keys', label: 'Moonshot API Keys' },
 };
 
 export function ModelStatusDashboard() {

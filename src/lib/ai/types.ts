@@ -12,7 +12,6 @@ export type AIProvider =
   | 'google' 
   | 'deepseek' 
   | 'xai' 
-  | 'moonshot'
   | 'replicate'
   | 'ideogram'
   | 'recraft'

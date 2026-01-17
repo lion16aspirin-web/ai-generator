@@ -44,7 +44,6 @@ export type ServiceType =
   | 'recraft'
   | 'xai'
   | 'deepseek'
-  | 'moonshot'
   | 'serper';
 
 export async function getApiKey(service: ServiceType): Promise<string | null> {
@@ -81,7 +80,6 @@ export async function getApiKey(service: ServiceType): Promise<string | null> {
     'recraft': process.env.RECRAFT_API_KEY,
     'xai': process.env.XAI_API_KEY,
     'deepseek': process.env.DEEPSEEK_API_KEY,
-    'moonshot': process.env.MOONSHOT_API_KEY,
     'serper': process.env.SERPER_API_KEY,
   };
 

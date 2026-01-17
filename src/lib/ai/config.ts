@@ -163,19 +163,6 @@ export const TEXT_MODELS: TextModel[] = [
     isAvailable: true,
   },
 
-  // ========== Moonshot Kimi ==========
-  {
-    id: 'kimi-k2',
-    name: 'Kimi K2',
-    provider: 'moonshot',
-    description: 'Рекордний контекст 2M токенів',
-    contextWindow: 2000000,
-    maxOutput: 8192,
-    inputPrice: 1.50,
-    outputPrice: 5.00,
-    capabilities: ['text', 'code'],
-    isAvailable: true,
-  },
 ];
 
 // ============================================
@@ -477,6 +464,4 @@ export const OPENROUTER_MODEL_MAP: Record<string, string> = {
   // xAI
   'grok-4': 'x-ai/grok-beta',
   'grok-4-max': 'x-ai/grok-beta',
-  // Moonshot
-  'kimi-k2': 'moonshot/kimi-v1.5',
 };

@@ -50,7 +50,6 @@ const SERVICES = [
   { value: 'recraft', label: 'Recraft (Illustrations)' },
   { value: 'xai', label: 'xAI (Grok)' },
   { value: 'deepseek', label: 'DeepSeek' },
-  { value: 'moonshot', label: 'Moonshot (Kimi)' },
   { value: 'runway', label: 'Runway' },
   { value: 'luma', label: 'Luma Dream Machine' },
   { value: 'kling', label: 'Kling' },
