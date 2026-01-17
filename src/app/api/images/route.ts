@@ -9,6 +9,7 @@ import { generateImage } from '@/lib/ai/image';
 import { calculateImageCost } from '@/lib/ai/pricing';
 import { deductTokens, getUserTokens, addTokens } from '@/lib/utils/tokens';
 import { AIError, ImageSize, TokenUsage } from '@/lib/ai/types';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 export const maxDuration = 120; // 2 хвилини для генерації
@@ -129,6 +130,24 @@ export async function POST(request: NextRequest) {
         n,
         quality,
       });
+
+      // Зберігаємо результат генерації в БД
+      try {
+        await prisma.generation.create({
+          data: {
+            userId,
+            type: 'IMAGE',
+            model,
+            prompt,
+            result: JSON.stringify(response.images),
+            tokens: response.usage.platformTokens,
+            status: 'COMPLETED',
+          },
+        });
+      } catch (dbError) {
+        console.error('Failed to save image generation to DB:', dbError);
+        // Не блокуємо відповідь, якщо не вдалося зберегти в БД
+      }
 
       return NextResponse.json(response);
     } catch (costError) {

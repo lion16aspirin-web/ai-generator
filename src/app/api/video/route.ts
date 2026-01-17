@@ -9,6 +9,7 @@ import { createVideoJob } from '@/lib/ai/video';
 import { calculateVideoCost } from '@/lib/ai/pricing';
 import { deductTokens, getUserTokens, addTokens } from '@/lib/utils/tokens';
 import { AIError, VideoMode, VideoResolution } from '@/lib/ai/types';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30; // Тільки створення job, не генерація
@@ -129,6 +130,24 @@ export async function POST(request: NextRequest) {
         sourceImage,
         sourceVideo,
       });
+
+      // Зберігаємо job в БД
+      try {
+        await prisma.generation.create({
+          data: {
+            userId,
+            type: 'VIDEO',
+            model,
+            prompt,
+            result: JSON.stringify({ jobId: job.id, status: job.status }),
+            tokens: estimatedCost.platformTokens,
+            status: job.status === 'completed' ? 'COMPLETED' : 'PROCESSING',
+          },
+        });
+      } catch (dbError) {
+        console.error('Failed to save video generation to DB:', dbError);
+        // Не блокуємо відповідь, якщо не вдалося зберегти в БД
+      }
 
       return NextResponse.json({
         ...job,

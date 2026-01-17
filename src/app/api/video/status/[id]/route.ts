@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { checkVideoJob } from '@/lib/ai/video';
 import { AIError } from '@/lib/ai/types';
+import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
@@ -40,6 +41,57 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Перевіряємо статус
     const job = await checkVideoJob(id, provider);
+
+    // Оновлюємо статус в БД якщо є запис
+    try {
+      const jobIdStr = id;
+      // Шукаємо записи VIDEO для користувача та фільтруємо по jobId в result
+      const recentGenerations = await prisma.generation.findMany({
+        where: {
+          userId: session.user.id,
+          type: 'VIDEO',
+          createdAt: {
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Останні 7 днів
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 50, // Останні 50 записів
+      });
+
+      // Знаходимо запис з відповідним jobId
+      const generation = recentGenerations.find(gen => {
+        if (!gen.result) return false;
+        try {
+          const result = JSON.parse(gen.result);
+          return result.jobId === jobIdStr;
+        } catch {
+          return false;
+        }
+      });
+
+      if (generation) {
+        // Маппінг статусів
+        const dbStatus = job.status === 'completed' ? 'COMPLETED' 
+          : job.status === 'failed' ? 'FAILED'
+          : job.status === 'processing' ? 'PROCESSING'
+          : 'PENDING';
+
+        await prisma.generation.update({
+          where: { id: generation.id },
+          data: {
+            status: dbStatus,
+            result: JSON.stringify({ 
+              jobId: job.id, 
+              status: job.status,
+              ...(job.result && { result: job.result }),
+            }),
+          },
+        });
+      }
+    } catch (dbError) {
+      console.error('Failed to update video generation status in DB:', dbError);
+      // Не блокуємо відповідь
+    }
 
     return NextResponse.json(job);
 
