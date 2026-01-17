@@ -280,11 +280,16 @@ export function ModelStatusDashboard() {
         </div>
       </div>
 
-      {/* Детальний список моделей */}
+      {/* Детальний список моделей - показуємо тільки підключені */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-white">Детальний статус моделей</h3>
+        <h3 className="text-lg font-semibold text-white">
+          Детальний статус моделей
+          <span className="ml-2 text-sm text-slate-400 font-normal">
+            (Показано: {models.filter(m => m.status === 'connected').length} підключених з {models.length})
+          </span>
+        </h3>
         <div className="space-y-2">
-          {models.map((model) => {
+          {models.filter(model => model.status === 'connected').map((model) => {
             const TypeIcon = TYPE_ICONS[model.type];
             const typeColor = TYPE_COLORS[model.type];
             const statusColor = STATUS_COLORS[model.status];

@@ -11,7 +11,7 @@ import {
   VIDEO_MODELS, 
   ANIMATION_MODELS 
 } from '@/lib/ai/config';
-// import { getOpenRouterProvider } from '@/lib/ai/providers/openrouter'; // Не використовуємо, щоб не викидати помилку без ключа
+import { getApiKey } from '@/lib/api-keys';
 
 export const runtime = 'nodejs';
 
@@ -46,26 +46,52 @@ async function checkOpenRouterModel(modelId: string): Promise<boolean> {
 }
 
 /**
- * Перевірка доступності провайдера
+ * Перевірка доступності провайдера через getApiKey() (БД або env)
  */
-async function checkProvider(provider: string): Promise<boolean> {
-  switch (provider) {
-    case 'openrouter':
-      return !!process.env.OPENROUTER_API_KEY && await checkOpenRouterModel('');
-    case 'openai':
-      return !!process.env.OPENAI_API_KEY;
-    case 'anthropic':
-      return !!process.env.ANTHROPIC_API_KEY;
-    case 'google':
-      return !!process.env.GOOGLE_AI_API_KEY;
-    case 'replicate':
-      return !!process.env.REPLICATE_API_TOKEN;
-    case 'ideogram':
-      return !!process.env.IDEOGRAM_API_KEY;
-    case 'recraft':
-      return !!process.env.RECRAFT_API_KEY;
-    default:
-      return false;
+async function checkProvider(provider: string): Promise<{ hasKey: boolean; error?: string }> {
+  // Мапінг провайдерів на ServiceType для getApiKey
+  const providerToServiceMap: Record<string, string> = {
+    'openrouter': 'openai', // OpenRouter використовує openai ключ
+    'openai': 'openai',
+    'anthropic': 'anthropic',
+    'google': 'google',
+    'replicate': 'replicate',
+    'ideogram': 'ideogram',
+    'recraft': 'recraft',
+    'xai': 'xai',
+    'deepseek': 'deepseek',
+  };
+
+  const service = providerToServiceMap[provider.toLowerCase()];
+  
+  if (!service) {
+    return { hasKey: false, error: `Unknown provider: ${provider}` };
+  }
+
+  try {
+    // Перевіряємо через getApiKey() - він спочатку шукає в БД, потім в env
+    const apiKey = await getApiKey(service as any);
+    
+    if (!apiKey) {
+      // Для текстових моделей через OpenRouter перевіряємо окремо
+      if (provider === 'openrouter' || provider === 'openai') {
+        const openRouterKey = await getApiKey('openai');
+        if (!openRouterKey && !process.env.OPENROUTER_API_KEY) {
+          return { hasKey: false, error: 'API key not configured' };
+        }
+        // Перевіряємо валідність ключа для OpenRouter
+        if (process.env.OPENROUTER_API_KEY) {
+          const isValid = await checkOpenRouterModel('');
+          return { hasKey: isValid, error: isValid ? undefined : 'Invalid API key' };
+        }
+      }
+      
+      return { hasKey: false, error: 'API key not configured' };
+    }
+    
+    return { hasKey: true };
+  } catch (error) {
+    return { hasKey: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
@@ -92,29 +118,37 @@ async function checkModelStatus(
     return status;
   }
 
-  // Перевірка провайдера
-  try {
-    status.status = 'testing';
-    
-    // Для OpenRouter перевіряємо один раз для всіх моделей
-    if (model.provider === 'openrouter') {
-      const isConnected = await checkProvider('openrouter');
-      status.status = isConnected ? 'connected' : 'disconnected';
-      if (!isConnected) {
-        status.error = 'OpenRouter API key not configured or invalid';
+    // Перевірка провайдера
+    try {
+      status.status = 'testing';
+      
+      // Визначаємо ServiceType для getApiKey
+      let serviceType = model.provider.toLowerCase();
+      
+      // Спеціальні маппінги для провайдерів
+      if (serviceType === 'openai' && type === 'image') {
+        serviceType = 'dalle';
+      } else if (serviceType === 'openai' && type === 'video') {
+        serviceType = 'sora';
+      } else if (serviceType === 'google' && type === 'video') {
+        serviceType = 'veo';
+      } else if (['kling', 'pixverse', 'minimax', 'wan', 'flux', 'midjourney', 'stable-diffusion'].includes(serviceType)) {
+        serviceType = 'replicate';
       }
-    } else {
-      // Для інших провайдерів перевіряємо наявність ключа
-      const hasKey = await checkProvider(model.provider);
-      status.status = hasKey ? 'connected' : 'disconnected';
-      if (!hasKey) {
-        status.error = `${model.provider} API key not configured`;
+      
+      // Перевіряємо наявність ключа через getApiKey()
+      const checkResult = await checkProvider(model.provider);
+      
+      if (checkResult.hasKey) {
+        status.status = 'connected';
+      } else {
+        status.status = 'disconnected';
+        status.error = checkResult.error || `${model.provider} API key not configured`;
       }
+    } catch (error) {
+      status.status = 'error';
+      status.error = error instanceof Error ? error.message : 'Unknown error';
     }
-  } catch (error) {
-    status.status = 'error';
-    status.error = error instanceof Error ? error.message : 'Unknown error';
-  }
 
   return status;
 }
