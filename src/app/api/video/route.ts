@@ -55,15 +55,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    ({ 
-      model, 
-      prompt, 
-      mode = 'text-to-video', 
-      duration = 5, 
-      resolution = '1080p',
-      sourceImage,
-      sourceVideo,
-    } = body);
+    // Деструктуризація (використовуємо окремі змінні щоб уникнути конфлікту з глобальною функцією prompt)
+    model = body.model;
+    const prompt = body.prompt;
+    const mode = body.mode || 'text-to-video';
+    const duration = body.duration || 5;
+    const resolution = body.resolution || '1080p';
+    const sourceImage = body.sourceImage;
+    const sourceVideo = body.sourceVideo;
 
     console.log('Video API Request:', { model, prompt: prompt?.substring(0, 50), mode, duration, resolution });
 
