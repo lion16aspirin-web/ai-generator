@@ -312,18 +312,32 @@ async function generateRecraftImage(
     throw new AIError('Recraft API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'recraft');
   }
 
+  // Recraft API - правильний формат запиту
+  const requestBody: any = {
+    prompt: request.prompt,
+    model: 'recraftv3', // Recraft використовує 'recraftv3' або 'recraftv2'
+    style: request.style || 'realistic_image',
+    num_outputs: request.n || 1,
+  };
+
+  // Додаємо size якщо вказано (Recraft приймає width/height)
+  if (request.size) {
+    const [width, height] = request.size.split('x').map(Number);
+    requestBody.width = width;
+    requestBody.height = height;
+  } else {
+    // За замовчуванням 1024x1024
+    requestBody.width = 1024;
+    requestBody.height = 1024;
+  }
+
   const response = await fetch('https://external.api.recraft.ai/v1/images/generations', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      prompt: request.prompt,
-      style: request.style || 'realistic_image',
-      size: request.size || '1024x1024',
-      n: request.n || 1,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
