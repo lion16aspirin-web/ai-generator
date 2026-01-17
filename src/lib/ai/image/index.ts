@@ -10,6 +10,7 @@ import {
 } from '../types';
 import { getImageModel, IMAGE_MODELS } from '../config';
 import { calculateImageCost } from '../pricing';
+import { getApiKey } from '@/lib/api-keys';
 
 // ============================================
 // ГЕНЕРАЦІЯ ЗОБРАЖЕНЬ
@@ -63,9 +64,9 @@ async function generateOpenAIImage(
   request: ImageRequest, 
   modelId: string
 ): Promise<ImageResponse> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = await getApiKey('dalle');
   if (!apiKey) {
-    throw new AIError('OPENAI_API_KEY not configured', 'UNAUTHORIZED', 'openai');
+    throw new AIError('OpenAI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'openai');
   }
 
   const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -116,9 +117,9 @@ async function generateReplicateImage(
   request: ImageRequest,
   modelId: string
 ): Promise<ImageResponse> {
-  const apiKey = process.env.REPLICATE_API_TOKEN;
+  const apiKey = await getApiKey('replicate');
   if (!apiKey) {
-    throw new AIError('REPLICATE_API_TOKEN not configured', 'UNAUTHORIZED', 'replicate');
+    throw new AIError('Replicate API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'replicate');
   }
 
   // Мапінг моделей
@@ -205,9 +206,9 @@ async function generateIdeogramImage(
   request: ImageRequest,
   modelId: string
 ): Promise<ImageResponse> {
-  const apiKey = process.env.IDEOGRAM_API_KEY;
+  const apiKey = await getApiKey('ideogram');
   if (!apiKey) {
-    throw new AIError('IDEOGRAM_API_KEY not configured', 'UNAUTHORIZED', 'ideogram');
+    throw new AIError('Ideogram API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'ideogram');
   }
 
   const response = await fetch('https://api.ideogram.ai/generate', {
@@ -252,9 +253,9 @@ async function generateGoogleImage(
   request: ImageRequest,
   modelId: string
 ): Promise<ImageResponse> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const apiKey = await getApiKey('google');
   if (!apiKey) {
-    throw new AIError('GOOGLE_AI_API_KEY not configured', 'UNAUTHORIZED', 'google');
+    throw new AIError('Google AI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'google');
   }
 
   // TODO: Implement Google Imagen API when available
@@ -269,9 +270,9 @@ async function generateRecraftImage(
   request: ImageRequest,
   modelId: string
 ): Promise<ImageResponse> {
-  const apiKey = process.env.RECRAFT_API_KEY;
+  const apiKey = await getApiKey('recraft');
   if (!apiKey) {
-    throw new AIError('RECRAFT_API_KEY not configured', 'UNAUTHORIZED', 'recraft');
+    throw new AIError('Recraft API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'recraft');
   }
 
   const response = await fetch('https://external.api.recraft.ai/v1/images/generations', {

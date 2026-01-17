@@ -40,6 +40,8 @@ export type ServiceType =
   | 'stable-diffusion'
   | 'kandinsky'
   | 'dalle'
+  | 'ideogram'
+  | 'recraft'
   | 'serper';
 
 export async function getApiKey(service: ServiceType): Promise<string | null> {
@@ -72,6 +74,8 @@ export async function getApiKey(service: ServiceType): Promise<string | null> {
     'stable-diffusion': process.env.REPLICATE_API_TOKEN,
     'kandinsky': process.env.KANDINSKY_API_KEY,
     'dalle': process.env.OPENAI_API_KEY,
+    'ideogram': process.env.IDEOGRAM_API_KEY,
+    'recraft': process.env.RECRAFT_API_KEY,
     'serper': process.env.SERPER_API_KEY,
   };
 
@@ -167,6 +171,33 @@ export async function testApiKey(service: ServiceType, key: string): Promise<boo
           body: JSON.stringify({ q: 'test' })
         });
         return serperRes.ok;
+
+      case 'ideogram':
+        const ideogramRes = await fetch('https://api.ideogram.ai/api/v1/models', {
+          headers: { 'Api-Key': key }
+        });
+        return ideogramRes.ok;
+
+      case 'recraft':
+        const recraftRes = await fetch('https://external.api.recraft.ai/v1/models', {
+          headers: { 'Authorization': `Bearer ${key}` }
+        });
+        return recraftRes.ok;
+
+      case 'kling':
+      case 'pixverse':
+      case 'minimax':
+      case 'wan':
+        // Ці сервіси використовують Replicate, тестуємо через Replicate API
+        const replicateTestRes = await fetch('https://api.replicate.com/v1/models', {
+          headers: { 'Authorization': `Token ${key}` }
+        });
+        return replicateTestRes.ok;
+
+      case 'runway':
+      case 'luma':
+        // Поки що просто повертаємо true, оскільки немає публічного API для тестування
+        return true;
 
       default:
         return true;

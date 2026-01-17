@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/prisma';
-import { saveApiKey, deleteApiKey, testApiKey, ServiceType } from '@/lib/api-keys';
+import { saveApiKey, deleteApiKey, testApiKey, getApiKey, ServiceType } from '@/lib/api-keys';
 
 // Check if user is admin
 async function isAdmin(userId: string): Promise<boolean> {
@@ -116,11 +116,21 @@ export async function PATCH(request: NextRequest) {
 
     const { service, key } = await request.json();
 
-    if (!service || !key) {
-      return NextResponse.json({ error: 'Service and key are required' }, { status: 400 });
+    if (!service) {
+      return NextResponse.json({ error: 'Service is required' }, { status: 400 });
     }
 
-    const valid = await testApiKey(service as ServiceType, key);
+    // Якщо ключ не передано, отримуємо його з БД
+    let keyToTest = key;
+    if (!keyToTest) {
+      const apiKeyFromDb = await getApiKey(service as ServiceType);
+      if (!apiKeyFromDb) {
+        return NextResponse.json({ error: 'API key not found in database' }, { status: 404 });
+      }
+      keyToTest = apiKeyFromDb;
+    }
+
+    const valid = await testApiKey(service as ServiceType, keyToTest);
 
     return NextResponse.json({ valid });
   } catch (error) {

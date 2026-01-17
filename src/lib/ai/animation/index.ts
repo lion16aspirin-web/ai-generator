@@ -10,6 +10,7 @@ import {
 } from '../types';
 import { getAnimationModel, ANIMATION_MODELS } from '../config';
 import { calculateAnimationCost } from '../pricing';
+import { getApiKey } from '@/lib/api-keys';
 
 // ============================================
 // ГЕНЕРАЦІЯ АНІМАЦІЇ
@@ -43,9 +44,9 @@ export async function createAnimationJob(request: AnimationRequest): Promise<Ani
  * Перевірка статусу анімації
  */
 export async function checkAnimationJob(jobId: string): Promise<AnimationJob> {
-  const apiKey = process.env.REPLICATE_API_TOKEN;
+  const apiKey = await getApiKey('replicate');
   if (!apiKey) {
-    throw new AIError('REPLICATE_API_TOKEN not configured', 'UNAUTHORIZED', 'replicate');
+    throw new AIError('Replicate API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'replicate');
   }
 
   const response = await fetch(`https://api.replicate.com/v1/predictions/${jobId}`, {
@@ -75,9 +76,9 @@ export async function checkAnimationJob(jobId: string): Promise<AnimationJob> {
 // ============================================
 
 async function createReplicateAnimation(request: AnimationRequest): Promise<AnimationJob> {
-  const apiKey = process.env.REPLICATE_API_TOKEN;
+  const apiKey = await getApiKey('replicate');
   if (!apiKey) {
-    throw new AIError('REPLICATE_API_TOKEN not configured', 'UNAUTHORIZED', 'replicate');
+    throw new AIError('Replicate API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'replicate');
   }
 
   // Моделі для анімації фото

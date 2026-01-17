@@ -11,6 +11,7 @@ import {
 } from '../types';
 import { getVideoModel, VIDEO_MODELS } from '../config';
 import { calculateVideoCost } from '../pricing';
+import { getApiKey } from '@/lib/api-keys';
 
 // ============================================
 // ГЕНЕРАЦІЯ ВІДЕО
@@ -76,9 +77,9 @@ export async function checkVideoJob(
 // ============================================
 
 async function createSoraJob(request: VideoRequest): Promise<VideoJob> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = await getApiKey('sora');
   if (!apiKey) {
-    throw new AIError('OPENAI_API_KEY not configured', 'UNAUTHORIZED', 'openai');
+    throw new AIError('OpenAI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'openai');
   }
 
   // Sora API (коли стане доступним)
@@ -117,9 +118,9 @@ async function createSoraJob(request: VideoRequest): Promise<VideoJob> {
 }
 
 async function checkSoraJob(jobId: string): Promise<VideoJob> {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = await getApiKey('sora');
   if (!apiKey) {
-    throw new AIError('OPENAI_API_KEY not configured', 'UNAUTHORIZED', 'openai');
+    throw new AIError('OpenAI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'openai');
   }
 
   const response = await fetch(`https://api.openai.com/v1/video/generations/${jobId}`, {
@@ -152,9 +153,9 @@ async function checkSoraJob(jobId: string): Promise<VideoJob> {
 // ============================================
 
 async function createVeoJob(request: VideoRequest): Promise<VideoJob> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const apiKey = await getApiKey('veo');
   if (!apiKey) {
-    throw new AIError('GOOGLE_AI_API_KEY not configured', 'UNAUTHORIZED', 'google');
+    throw new AIError('Google AI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'google');
   }
 
   // Google Veo API
@@ -187,9 +188,9 @@ async function createVeoJob(request: VideoRequest): Promise<VideoJob> {
 }
 
 async function checkVeoJob(jobId: string): Promise<VideoJob> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY;
+  const apiKey = await getApiKey('veo');
   if (!apiKey) {
-    throw new AIError('GOOGLE_AI_API_KEY not configured', 'UNAUTHORIZED', 'google');
+    throw new AIError('Google AI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'google');
   }
 
   const response = await fetch(
@@ -224,9 +225,9 @@ async function createReplicateVideoJob(
   request: VideoRequest,
   modelId: string
 ): Promise<VideoJob> {
-  const apiKey = process.env.REPLICATE_API_TOKEN;
+  const apiKey = await getApiKey('replicate');
   if (!apiKey) {
-    throw new AIError('REPLICATE_API_TOKEN not configured', 'UNAUTHORIZED', 'replicate');
+    throw new AIError('Replicate API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'replicate');
   }
 
   const modelVersions: Record<string, string> = {
@@ -272,9 +273,9 @@ async function createReplicateVideoJob(
 }
 
 async function checkReplicateJob(jobId: string): Promise<VideoJob> {
-  const apiKey = process.env.REPLICATE_API_TOKEN;
+  const apiKey = await getApiKey('replicate');
   if (!apiKey) {
-    throw new AIError('REPLICATE_API_TOKEN not configured', 'UNAUTHORIZED', 'replicate');
+    throw new AIError('Replicate API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'replicate');
   }
 
   const response = await fetch(`https://api.replicate.com/v1/predictions/${jobId}`, {
