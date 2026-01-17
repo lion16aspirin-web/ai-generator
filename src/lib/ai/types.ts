@@ -277,6 +277,7 @@ export class AIError extends Error {
 
 export type AIErrorCode = 
   | 'INVALID_REQUEST'
+  | 'INVALID_STYLE'
   | 'UNAUTHORIZED'
   | 'RATE_LIMITED'
   | 'INSUFFICIENT_TOKENS'
