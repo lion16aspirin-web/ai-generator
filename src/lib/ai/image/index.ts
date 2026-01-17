@@ -36,6 +36,17 @@ export async function generateImage(request: ImageRequest): Promise<ImageRespons
     );
   }
 
+  // Валідація стилю для моделі
+  if (request.style && model.styles && model.styles.length > 0) {
+    if (!model.styles.includes(request.style)) {
+      throw new AIError(
+        `Invalid image style "${request.style}" for model ${model.name}. Available styles: ${model.styles.join(', ')}`,
+        'INVALID_STYLE',
+        model.provider
+      );
+    }
+  }
+
   // Роутинг до відповідного провайдера
   switch (model.provider) {
     case 'openai':
@@ -73,6 +84,17 @@ async function generateOpenAIImage(
     throw new AIError('OpenAI API key not configured. Add it in admin panel (dalle or openai).', 'UNAUTHORIZED', 'openai');
   }
 
+  // OpenAI DALL-E 3 підтримує тільки 'vivid' та 'natural'
+  let openAIStyle: 'vivid' | 'natural' | undefined = undefined;
+  if (request.style) {
+    if (request.style === 'vivid' || request.style === 'natural') {
+      openAIStyle = request.style;
+    } else {
+      // Маппінг інших стилів на natural
+      openAIStyle = 'natural';
+    }
+  }
+
   const response = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
@@ -85,7 +107,7 @@ async function generateOpenAIImage(
       n: request.n || 1,
       size: request.size || '1024x1024',
       quality: request.quality || 'standard',
-      style: request.style,
+      style: openAIStyle,
     }),
   });
 
