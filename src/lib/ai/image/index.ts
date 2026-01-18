@@ -437,8 +437,125 @@ async function generateGoogleImage(
     throw new AIError('Google AI API key not configured. Add it in admin panel.', 'UNAUTHORIZED', 'google');
   }
 
-  // TODO: Implement Google Imagen API when available
-  throw new AIError('Google Imagen not yet implemented', 'MODEL_UNAVAILABLE', 'google');
+  // Визначити модель для API
+  // nano-banana використовує Gemini 2.5 Flash Image
+  // nano-banana-pro використовує Gemini 3 Pro Image
+  // imagen-4 може використовувати старішу версію API або іншу модель
+  let apiModel: string;
+  if (modelId === 'nano-banana-pro') {
+    apiModel = 'gemini-3.0-pro-image-exp';
+  } else if (modelId === 'nano-banana') {
+    apiModel = 'gemini-2.5-flash-image-exp';
+  } else if (modelId === 'imagen-4') {
+    // Для Imagen 4 можна використати ту ж модель що й Nano Banana або окрему
+    apiModel = 'gemini-2.5-flash-image-exp';
+  } else {
+    // Fallback для невідомих моделей
+    apiModel = 'gemini-2.5-flash-image-exp';
+  }
+
+  // Підготовка запиту до Gemini Image API
+  const requestBody: any = {
+    contents: [{
+      parts: [{
+        text: request.prompt
+      }]
+    }],
+    generationConfig: {
+      temperature: 0.4,
+    }
+  };
+
+  // Додати розмір якщо вказано
+  if (request.size) {
+    const [width, height] = request.size.split('x').map(Number);
+    requestBody.generationConfig.width = width;
+    requestBody.generationConfig.height = height;
+  }
+
+  // Додати негативний промпт якщо вказано
+  if (request.negativePrompt) {
+    // Gemini API може підтримувати negative prompt через prompt engineering
+    // Або можна додати його до generationConfig якщо підтримується
+  }
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    let errorMessage = 'Google Image generation failed';
+    let errorCode: AIErrorCode = 'PROVIDER_ERROR';
+    
+    try {
+      const errorData = await response.json();
+      console.error('Google Image API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        modelId,
+        promptLength: request.prompt?.length,
+      });
+      
+      if (errorData.error?.message) {
+        errorMessage = errorData.error.message;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+      
+      // Маппінг статусів на коди помилок
+      if (response.status === 401 || response.status === 403) {
+        errorCode = 'UNAUTHORIZED';
+      } else if (response.status === 402 || response.status === 429) {
+        errorCode = response.status === 402 ? 'INSUFFICIENT_TOKENS' : 'RATE_LIMITED';
+      } else if (response.status === 400 || response.status === 422) {
+        errorCode = 'INVALID_REQUEST';
+      }
+    } catch (parseError) {
+      console.error('Google Image API Error - Failed to parse error response:', parseError);
+      errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    }
+    
+    throw new AIError(errorMessage, errorCode, 'google', response.status);
+  }
+
+  const data = await response.json();
+  const usage = calculateImageCost(modelId, request.n || 1);
+
+  // Парсинг відповіді Gemini Image API
+  const images: GeneratedImage[] = [];
+  if (data.candidates && data.candidates[0]?.content?.parts) {
+    for (const part of data.candidates[0].content.parts) {
+      if (part.inlineData?.mimeType?.startsWith('image/')) {
+        // Base64 зображення
+        images.push({
+          url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+        });
+      } else if (part.url) {
+        // URL зображення
+        images.push({ url: part.url });
+      }
+    }
+  }
+
+  if (images.length === 0) {
+    throw new AIError(
+      'Google API returned no images. Response format may have changed.',
+      'PROVIDER_ERROR',
+      'google'
+    );
+  }
+
+  return {
+    id: crypto.randomUUID(),
+    images,
+    model: modelId,
+    usage,
+  };
 }
 
 // ============================================

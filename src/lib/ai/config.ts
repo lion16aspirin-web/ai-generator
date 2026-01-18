@@ -272,6 +272,28 @@ export const IMAGE_MODELS: ImageModel[] = [
     isAvailable: true,
   },
 
+  // ========== Google (Nano Banana) ==========
+  {
+    id: 'nano-banana',
+    name: 'Nano Banana (Gemini 2.5 Flash Image)',
+    provider: 'google',
+    description: 'Швидка генерація зображень від Google',
+    sizes: ['1024x1024', '1536x1536', '2048x2048'],
+    pricePerImage: 0.025,
+    features: ['fast', 'edit'],
+    isAvailable: true,
+  },
+  {
+    id: 'nano-banana-pro',
+    name: 'Nano Banana Pro (Gemini 3 Pro Image)',
+    provider: 'google',
+    description: 'Покращена версія з кращою якістю та 4K',
+    sizes: ['1024x1024', '2048x2048', '4096x4096'],
+    pricePerImage: 0.05,
+    features: ['hd', 'edit', '4k'],
+    isAvailable: true,
+  },
+
   // ========== Google ==========
   {
     id: 'imagen-4',
@@ -281,7 +303,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     sizes: ['1024x1024', '1536x1536'],
     pricePerImage: 0.025,
     features: ['fast'],
-    isAvailable: false, // API не реалізовано
+    isAvailable: true, // API реалізовано через generateGoogleImage
   },
 ];
 

@@ -44,10 +44,14 @@
 ## ✅ Виправлені помилки
 
 ### 1. Google Imagen - Not yet implemented ✅
-**Модель:** Google Imagen  
-**Дата виправлення:** 2026-01-15  
-**Виправлення:** Позначено модель як недоступну (`isAvailable: false` в `src/lib/ai/config.ts`), оскільки API ще не реалізовано  
-**Статус:** Модель більше не відображається як доступна в інтерфейсі
+**Модель:** Google Imagen / Nano Banana  
+**Дата виправлення:** 2026-01-15 (частинно), 2026-01-15 (повністю)  
+**Виправлення:** 
+- Перший етап: Позначено модель як недоступну (`isAvailable: false`), оскільки API ще не реалізовано
+- Другий етап: Повністю реалізовано Google Image Generation API через `generateGoogleImage` функцію
+- Додано Nano Banana (Gemini 2.5 Flash Image) та Nano Banana Pro (Gemini 3 Pro Image) до списку моделей
+- Оновлено статус `imagen-4` як доступної моделі  
+**Статус:** Google Imagen API повністю реалізовано та працює. Додано Nano Banana та Nano Banana Pro моделі.
 
 ---
 
