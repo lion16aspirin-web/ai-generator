@@ -39,6 +39,17 @@ export async function generateImage(request: ImageRequest): Promise<ImageRespons
 
   // Валідація стилю для моделі
   if (request.style && model.styles && model.styles.length > 0) {
+    // Маппінг стилів для Recraft перед валідацією
+    if (model.provider === 'recraft') {
+      const recraftStyleMap: Record<string, string> = {
+        'vivid': 'realistic',
+        'natural': 'realistic',
+      };
+      if (recraftStyleMap[request.style]) {
+        request.style = recraftStyleMap[request.style];
+      }
+    }
+    
     if (!model.styles.includes(request.style)) {
       throw new AIError(
         `Invalid image style "${request.style}" for model ${model.name}. Available styles: ${model.styles.join(', ')}`,
@@ -86,8 +97,9 @@ async function generateOpenAIImage(
   }
 
   // OpenAI DALL-E 3 підтримує тільки 'vivid' та 'natural'
+  // GPT Image 1.0 не підтримує параметр style
   let openAIStyle: 'vivid' | 'natural' | undefined = undefined;
-  if (request.style) {
+  if (modelId !== 'gpt-image-1' && request.style) {
     if (request.style === 'vivid' || request.style === 'natural') {
       openAIStyle = request.style;
     } else {
@@ -96,20 +108,26 @@ async function generateOpenAIImage(
     }
   }
 
+  const requestBody: any = {
+    model: modelId === 'gpt-image-1' ? 'gpt-image-1' : 'dall-e-3',
+    prompt: request.prompt,
+    n: request.n || 1,
+    size: request.size || '1024x1024',
+    quality: request.quality || 'standard',
+  };
+
+  // Додати style тільки для DALL-E 3 (GPT Image 1.0 не підтримує)
+  if (modelId !== 'gpt-image-1' && openAIStyle) {
+    requestBody.style = openAIStyle;
+  }
+
   const response = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      model: modelId === 'gpt-image-1' ? 'gpt-image-1' : 'dall-e-3',
-      prompt: request.prompt,
-      n: request.n || 1,
-      size: request.size || '1024x1024',
-      quality: request.quality || 'standard',
-      style: openAIStyle,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -253,12 +271,18 @@ async function generateReplicateImage(
       errorMessage = `HTTP ${createResponse.status}: ${createResponse.statusText}`;
     }
     
+    // Спеціальна обробка помилки 402 (недостатньо коштів)
+    if (createResponse.status === 402) {
+      errorCode = 'INSUFFICIENT_TOKENS';
+      errorMessage = 'Недостатньо коштів на Replicate. Перевірте баланс акаунту.';
+    }
+    
     // Маппінг статусів на коди помилок
     if (errorCode === 'PROVIDER_ERROR') {
       if (createResponse.status === 401 || createResponse.status === 403) {
         errorCode = 'UNAUTHORIZED';
-      } else if (createResponse.status === 402 || createResponse.status === 429) {
-        errorCode = createResponse.status === 402 ? 'INSUFFICIENT_TOKENS' : 'RATE_LIMITED';
+      } else if (createResponse.status === 429) {
+        errorCode = 'RATE_LIMITED';
       } else if (createResponse.status === 400 || createResponse.status === 422) {
         errorCode = 'INVALID_REQUEST';
       }
@@ -273,9 +297,23 @@ async function generateReplicateImage(
   const result = await pollReplicatePrediction(prediction.id, apiKey);
   const usage = calculateImageCost(modelId, request.n || 1);
 
+  // Валідація result.output перед викликом .map()
+  if (!result.output) {
+    throw new AIError(
+      'Replicate API returned invalid response format (no output)',
+      'PROVIDER_ERROR',
+      'replicate'
+    );
+  }
+
+  // Перевірка, що output - масив, якщо ні - обгортаємо в масив
+  const outputArray = Array.isArray(result.output) 
+    ? result.output 
+    : [result.output].filter(Boolean);
+
   return {
     id: prediction.id,
-    images: result.output.map((url: string) => ({ url })),
+    images: outputArray.map((url: string) => ({ url })),
     model: modelId,
     usage,
   };

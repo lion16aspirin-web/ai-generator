@@ -281,7 +281,7 @@ export const IMAGE_MODELS: ImageModel[] = [
     sizes: ['1024x1024', '1536x1536'],
     pricePerImage: 0.025,
     features: ['fast'],
-    isAvailable: true,
+    isAvailable: false, // API не реалізовано
   },
 ];
 
