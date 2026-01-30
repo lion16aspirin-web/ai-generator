@@ -3,10 +3,12 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, Lock, User, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Sparkles, AlertCircle } from 'lucide-react';
 
 interface RegisterPageProps {
   params: Promise<{ locale: string }>;
@@ -15,21 +17,71 @@ interface RegisterPageProps {
 export default function RegisterPage({ params }: RegisterPageProps) {
   const { locale } = React.use(params);
   const t = useTranslations('Register');
+  const router = useRouter();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [errorField, setErrorField] = useState<string>('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert(locale === 'uk' ? 'Паролі не співпадають' : 'Passwords do not match');
-      return;
-    }
     setIsLoading(true);
-    // TODO: Implement registration
-    setTimeout(() => setIsLoading(false), 1000);
+    setError('');
+    setErrorField('');
+
+    try {
+      // Send registration request
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle error response
+        const errorMessage = locale === 'uk' ? data.messageUk : data.message;
+        setError(errorMessage || 'An error occurred');
+        setErrorField(data.field || '');
+        return;
+      }
+
+      // Registration successful - auto sign in
+      const result = await signIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError(locale === 'uk'
+          ? 'Реєстрація успішна, але виникла помилка при вході'
+          : 'Registration successful, but sign in failed'
+        );
+      } else {
+        // Redirect to home page
+        router.push(`/${locale}`);
+        router.refresh();
+      }
+    } catch (err) {
+      setError(locale === 'uk'
+        ? 'Виникла помилка. Спробуйте ще раз'
+        : 'An error occurred. Please try again'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -52,14 +104,25 @@ export default function RegisterPage({ params }: RegisterPageProps) {
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {error && (
+            <div className="p-3 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Input
                 type="text"
                 placeholder={t('name')}
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errorField === 'name') setError('');
+                }}
                 icon={<User className="h-4 w-4" />}
+                className={errorField === 'name' ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 required
               />
             </div>
@@ -68,8 +131,12 @@ export default function RegisterPage({ params }: RegisterPageProps) {
                 type="email"
                 placeholder={t('email')}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errorField === 'email') setError('');
+                }}
                 icon={<Mail className="h-4 w-4" />}
+                className={errorField === 'email' ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 required
               />
             </div>
@@ -78,8 +145,12 @@ export default function RegisterPage({ params }: RegisterPageProps) {
                 type="password"
                 placeholder={t('password')}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errorField === 'password') setError('');
+                }}
                 icon={<Lock className="h-4 w-4" />}
+                className={errorField === 'password' ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 required
               />
             </div>
@@ -88,8 +159,12 @@ export default function RegisterPage({ params }: RegisterPageProps) {
                 type="password"
                 placeholder={t('confirmPassword')}
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errorField === 'confirmPassword') setError('');
+                }}
                 icon={<Lock className="h-4 w-4" />}
+                className={errorField === 'confirmPassword' ? 'border-red-500 focus-visible:ring-red-500' : ''}
                 required
               />
             </div>

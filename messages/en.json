@@ -190,7 +190,22 @@
     "google": "Sign up with Google",
     "github": "Sign up with GitHub",
     "hasAccount": "Already have an account?",
-    "login": "Sign In"
+    "login": "Sign In",
+    "errors": {
+      "invalidEmail": "Invalid email format",
+      "emailTooShort": "Email must be at least 3 characters",
+      "emailTooLong": "Email must not exceed 255 characters",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "passwordTooLong": "Password must not exceed 100 characters",
+      "passwordWeak": "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+      "passwordMismatch": "Passwords do not match",
+      "nameTooShort": "Name must be at least 2 characters",
+      "nameTooLong": "Name must not exceed 100 characters",
+      "userExists": "User with this email already exists",
+      "serverError": "Internal server error",
+      "invalidRequest": "Invalid request data"
+    },
+    "success": "Registration successful! Signing you in..."
   },
   "Admin": {
     "title": "Admin Panel",
