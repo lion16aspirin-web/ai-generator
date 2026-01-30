@@ -129,7 +129,7 @@ export type ImageSize =
   | '2048x2048'
   | '4096x4096';
 
-export type ImageFeature = 'hd' | 'edit' | 'variations' | 'fast' | 'text';
+export type ImageFeature = 'hd' | 'edit' | 'variations' | 'fast' | 'text' | '4k';
 
 export interface ImageRequest {
   model: string;
